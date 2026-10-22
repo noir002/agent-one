@@ -1,10 +1,12 @@
 # Agent One — A Forest of AI Agents
 
-A free hub of student AI agents, shown as a forest. Through Milestone 2: the
-full 24-agent native catalogue, 10 unofficial "inspired by" prototypes of
-popular third-party AI tools, the check job + credibility scoring, ratings,
-and the leaderboard — on top of Milestone 1's generic runner, dev-mode auth,
-and forest → agent → sandbox → run → share flow.
+A free hub of student AI agents, shown as a forest. Through Milestone 3: the
+upload flow (with pre-publish checks), recent-runs panel, and a full 390px
+responsive pass — on top of Milestone 2's full 24-agent native catalogue, 10
+unofficial "inspired by" prototypes of popular third-party AI tools, the
+check job + credibility scoring, ratings, and the leaderboard, and
+Milestone 1's generic runner, dev-mode auth, and forest → agent → sandbox →
+run → share flow.
 
 ## Quickstart (under 10 minutes)
 
@@ -84,19 +86,30 @@ representative** (the mock adapter returns generic templated text, so most
 `mustInclude` checks fail by design) — set a real `LLM_PROVIDER`/`LLM_API_KEY`
 for a meaningful run.
 
-## What's built through Milestone 2
+## Uploading your own agent
 
-- Everything from Milestone 1 (generic runner, LLM adapter, dev/Google auth,
-  run limits, shared run pages).
-- All 24 native agents + 10 external prototypes, seeded from JSON configs.
-- Check job (`server/src/checks/runCheck.js`): runs test cases, checks
-  `mustInclude` terms, does an LLM safety review, stores a `Check` document.
-- Credibility scoring and badges (seedling / growing / verified).
-- Ratings (`POST /api/agents/:slug/rate`), the leaderboard
-  (`GET /api/leaderboard`), and platform stats (`GET /api/stats`).
-- Client: grove pages (`/grove/:grove`), the leaderboard page, star ratings
-  on the agent page, external-agent disclaimers and outbound links.
+`/upload` (signed in required) — config only, as the brief requires: a name,
+grove, tagline, system prompt, any number of input fields, and 2+ test
+cases, built entirely in the browser (no code, no file upload). Submitting
+runs the same check job used for the seeded catalogue
+(`POST /api/agents` → `runCheckForAgent`); the agent publishes as a
+**Seedling** only if every test case passes and the safety review raised no
+flags, otherwise it's saved but kept unlisted (`status: "hidden"`) and the
+page shows exactly which test cases failed. Resubmitting under the same name
+updates that agent in place and re-runs the checks — the fix-and-resubmit
+loop the brief describes. A name already used by someone else (or by seeded
+catalogue data) is rejected rather than overwritten.
 
-Not yet built (later milestones): the upload flow (with pre-publish checks),
-recent-runs panel on the agent page, admin verified-review flow, and the full
-390px responsive pass across every page.
+## What's built through Milestone 3
+
+- Everything from Milestones 1–2 (generic runner, LLM adapter, dev/Google
+  auth, run limits, shared run pages, full catalogue, scoring, leaderboard).
+- Upload flow with pre-publish checks (see above).
+- Recent public runs panel and test-case-results panel on the agent page.
+- Scroll-to-top on route change.
+- Verified at 390px width: home, grove, leaderboard, agent, shared-run,
+  login, and upload pages all render without horizontal overflow.
+
+Not yet built: admin verified-review flow and a "bring your own API key"
+settings page for heavy users (both mentioned as stretch items in the brief,
+not in any numbered milestone).

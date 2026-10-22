@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Nav from "./components/Nav.jsx";
 import Home from "./pages/Home.jsx";
 import Agent from "./pages/Agent.jsx";
@@ -9,6 +9,14 @@ import SharedRun from "./pages/SharedRun.jsx";
 import DevLogin from "./pages/DevLogin.jsx";
 import Upload from "./pages/Upload.jsx";
 import { api } from "./lib/api.js";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 export default function App() {
   const [me, setMe] = useState(null);
@@ -28,6 +36,7 @@ export default function App() {
 
   return (
     <div className="mx-auto min-h-screen max-w-5xl">
+      <ScrollToTop />
       <Nav me={me} onLogout={handleLogout} />
       <main className="px-4 pb-16 sm:px-8">
         <Routes>
