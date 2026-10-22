@@ -28,7 +28,7 @@ export default function App() {
       <Nav me={me} onLogout={handleLogout} />
       <main className="px-4 pb-16 sm:px-8">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home me={me} />} />
           <Route path="/agent/:slug" element={<Agent me={me} onRan={refreshMe} />} />
           <Route path="/r/:shareId" element={<SharedRun />} />
           <Route path="/login" element={<DevLogin onLoggedIn={refreshMe} />} />

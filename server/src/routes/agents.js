@@ -34,6 +34,10 @@ router.post("/:slug/run", async (req, res) => {
     if ((req.session.visitorRuns || 0) >= VISITOR_DAILY_LIMIT) {
       return res.status(429).json({ error: `Sign in to keep going — visitors get ${VISITOR_DAILY_LIMIT} free runs a day.` });
     }
+    // Increment and let cookie-session attach the updated Set-Cookie header
+    // now, before headers are flushed below — once the SSE stream starts,
+    // it's too late to add Set-Cookie to the response.
+    req.session.visitorRuns = (req.session.visitorRuns || 0) + 1;
   }
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -52,10 +56,6 @@ router.post("/:slug/run", async (req, res) => {
       user: req.user,
       onChunk: (chunk) => send("chunk", { text: chunk }),
     });
-
-    if (!req.user) {
-      req.session.visitorRuns = (req.session.visitorRuns || 0) + 1;
-    }
 
     send("done", { runId: run._id, shareId: run.shareId, status: run.status });
     res.end();

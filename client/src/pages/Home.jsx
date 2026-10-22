@@ -17,7 +17,7 @@ function badgeColor(badge) {
   return "bg-panel text-ink-muted";
 }
 
-export default function Home() {
+export default function Home({ me }) {
   const [groves, setGroves] = useState([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -47,7 +47,7 @@ export default function Home() {
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <a href="#forest" className="btn-primary">Explore the forest</a>
-          <Link to="/login" className="btn-secondary">Sign in</Link>
+          {!me?.user && <Link to="/login" className="btn-secondary">Sign in</Link>}
         </div>
       </section>
 
