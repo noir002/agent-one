@@ -23,10 +23,10 @@ export default function SharedRun() {
 
       <div className="card mt-4">
         <h2 className="mb-2 text-sm font-semibold uppercase text-ink-muted">Input</h2>
-        <pre className="whitespace-pre-wrap font-mono text-sm">{JSON.stringify(run.inputs, null, 2)}</pre>
+        <pre className="whitespace-pre-wrap break-words font-mono text-sm">{JSON.stringify(run.inputs, null, 2)}</pre>
       </div>
 
-      <div className="card mt-4 whitespace-pre-wrap font-mono text-sm">
+      <div className="card mt-4 whitespace-pre-wrap break-words font-mono text-sm">
         <h2 className="mb-2 font-sans text-sm font-semibold uppercase text-ink-muted">Output</h2>
         {run.output}
       </div>

@@ -13,11 +13,17 @@ export default function Agent({ me, onRan }) {
   const [loadError, setLoadError] = useState("");
   const [rating, setRating] = useState(null);
   const [rateMessage, setRateMessage] = useState("");
+  const [latestCheck, setLatestCheck] = useState(null);
+  const [recentRuns, setRecentRuns] = useState([]);
 
   useEffect(() => {
     api.getAgent(slug)
-      .then((data) => setAgent(data.agent))
+      .then((data) => {
+        setAgent(data.agent);
+        setLatestCheck(data.latestCheck);
+      })
       .catch((err) => setLoadError(err.message));
+    api.getAgentRuns(slug).then((data) => setRecentRuns(data.runs)).catch(() => {});
   }, [slug]);
 
   const handleChange = (key, value) => setInputs((prev) => ({ ...prev, [key]: value }));
@@ -34,6 +40,7 @@ export default function Agent({ me, onRan }) {
         setShareId(data.shareId);
         setRunning(false);
         onRan?.();
+        api.getAgentRuns(slug).then((d) => setRecentRuns(d.runs)).catch(() => {});
       },
       onError: (message) => {
         setError(message);
@@ -122,7 +129,7 @@ export default function Agent({ me, onRan }) {
         </form>
 
         <div>
-          <div className="card min-h-[200px] whitespace-pre-wrap font-mono text-sm">
+          <div className="card min-h-[200px] whitespace-pre-wrap break-words font-mono text-sm">
             {output || <span className="text-ink-muted">Output will stream here.</span>}
             {shareId && (
               <div className="mt-4 border-t border-border-card pt-3 font-sans">
@@ -156,6 +163,35 @@ export default function Agent({ me, onRan }) {
             )}
             {rateMessage && <p className="mt-2 text-sm text-ink-muted">{rateMessage}</p>}
           </div>
+
+          {recentRuns.length > 0 && (
+            <div className="card mt-4 font-sans">
+              <p className="mb-2 text-sm font-medium">Recent public runs</p>
+              <ul className="space-y-1.5">
+                {recentRuns.map((run) => (
+                  <li key={run.shareId}>
+                    <Link to={`/r/${run.shareId}`} className="block truncate text-sm text-ink-muted hover:text-emerald">
+                      {run.excerpt || "(empty output)"}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {latestCheck && (
+            <div className="card mt-4 font-sans">
+              <p className="mb-2 text-sm font-medium">Test case results</p>
+              <ul className="space-y-1.5">
+                {latestCheck.results.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className={r.pass ? "text-emerald" : "text-red-600"}>{r.pass ? "✓" : "✗"}</span>
+                    <span className="text-ink-muted">{r.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -12,6 +12,9 @@ export default function Nav({ me, onLogout }) {
         </Link>
         {me?.user ? (
           <>
+            <Link to="/upload" className="hidden text-sm text-ink-muted hover:text-ink sm:inline">
+              Upload
+            </Link>
             <span className="hidden text-sm text-ink-muted sm:inline">
               {me.user.name} · {me.runsLeftToday} runs left today
             </span>

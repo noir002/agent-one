@@ -7,6 +7,7 @@ import Grove from "./pages/Grove.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import SharedRun from "./pages/SharedRun.jsx";
 import DevLogin from "./pages/DevLogin.jsx";
+import Upload from "./pages/Upload.jsx";
 import { api } from "./lib/api.js";
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/agent/:slug" element={<Agent me={me} onRan={refreshMe} />} />
           <Route path="/r/:shareId" element={<SharedRun />} />
           <Route path="/login" element={<DevLogin onLoggedIn={refreshMe} />} />
+          <Route path="/upload" element={<Upload me={me} />} />
         </Routes>
       </main>
     </div>
