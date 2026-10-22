@@ -1,0 +1,16 @@
+{
+  "name": "@agentone/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/worker.js",
+    "start": "node src/worker.js"
+  },
+  "dependencies": {
+    "@agentone/shared": "*",
+    "bullmq": "^5.12.12",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1"
+  }
+}

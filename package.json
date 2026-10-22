@@ -1,0 +1,11 @@
+{
+  "name": "agentone-v2",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "api",
+    "worker",
+    "client",
+    "shared"
+  ]
+}

@@ -1,20 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import Nav from "./components/Nav.jsx";
+import NavPill from "./components/NavPill.jsx";
+import LiquidGlassFilter from "./components/LiquidGlassFilter.jsx";
 import Home from "./pages/Home.jsx";
-import Agent from "./pages/Agent.jsx";
-import Grove from "./pages/Grove.jsx";
-import Leaderboard from "./pages/Leaderboard.jsx";
-import SharedRun from "./pages/SharedRun.jsx";
-import DevLogin from "./pages/DevLogin.jsx";
-import Upload from "./pages/Upload.jsx";
+import Listing from "./pages/Listing.jsx";
+import Compare from "./pages/Compare.jsx";
+import Submit from "./pages/Submit.jsx";
+import Login from "./pages/Login.jsx";
+import Admin from "./pages/Admin.jsx";
+import HowWeMakeMoney from "./pages/HowWeMakeMoney.jsx";
 import { api } from "./lib/api.js";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
@@ -25,9 +24,7 @@ export default function App() {
     api.me().then(setMe).catch(() => setMe(null));
   }, []);
 
-  useEffect(() => {
-    refreshMe();
-  }, [refreshMe]);
+  useEffect(() => { refreshMe(); }, [refreshMe]);
 
   const handleLogout = async () => {
     await api.logout();
@@ -35,18 +32,19 @@ export default function App() {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl">
+    <div className="min-h-screen bg-bg">
+      <LiquidGlassFilter />
       <ScrollToTop />
-      <Nav me={me} onLogout={handleLogout} />
-      <main className="px-4 pb-16 sm:px-8">
+      <NavPill me={me} onLogout={handleLogout} />
+      <main className="pb-16">
         <Routes>
-          <Route path="/" element={<Home me={me} />} />
-          <Route path="/grove/:grove" element={<Grove />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/agent/:slug" element={<Agent me={me} onRan={refreshMe} />} />
-          <Route path="/r/:shareId" element={<SharedRun />} />
-          <Route path="/login" element={<DevLogin onLoggedIn={refreshMe} />} />
-          <Route path="/upload" element={<Upload me={me} />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/listing/:slug" element={<Listing me={me} />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/submit" element={<Submit me={me} />} />
+          <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
+          <Route path="/admin" element={<Admin me={me} />} />
+          <Route path="/how-we-make-money" element={<HowWeMakeMoney />} />
         </Routes>
       </main>
     </div>

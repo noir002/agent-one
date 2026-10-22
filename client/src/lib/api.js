@@ -14,57 +14,37 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  getForest: () => request("/forest"),
-  getAgents: (params = {}) => request(`/agents?${new URLSearchParams(params)}`),
-  getAgent: (slug) => request(`/agents/${slug}`),
-  getAgentRuns: (slug) => request(`/agents/${slug}/runs`),
-  getRun: (shareId) => request(`/runs/${shareId}`),
-  uploadAgent: (payload) => request("/agents", { method: "POST", body: JSON.stringify(payload) }),
-  getLeaderboard: (params = {}) => request(`/leaderboard?${new URLSearchParams(params)}`),
+  // Listings
+  getListings: (params = {}) => {
+    const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ""));
+    return request(`/listings?${new URLSearchParams(clean)}`);
+  },
+  getCategories: () => request("/listings/categories"),
+  getListing: (slug) => request(`/listings/${slug}`),
+  getCompare: (slugs) => request(`/listings/compare?slugs=${slugs.join(",")}`),
+  submitListing: (payload) => request("/listings", { method: "POST", body: JSON.stringify(payload) }),
+
+  // Claims
+  submitClaim: (payload) => request("/claims", { method: "POST", body: JSON.stringify(payload) }),
+  getMyClaims: () => request("/claims/mine"),
+  checkClaimDomain: (claimId) => request(`/claims/${claimId}/check-domain`, { method: "POST" }),
+
+  // Admin
+  getAdminClaims: () => request("/admin/claims"),
+  approveClaim: (id, note) => request(`/admin/claims/${id}/approve`, { method: "POST", body: JSON.stringify({ note }) }),
+  rejectClaim: (id, note) => request(`/admin/claims/${id}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
+  hideListing: (id) => request(`/admin/listings/${id}/hide`, { method: "POST" }),
+  unhideListing: (id) => request(`/admin/listings/${id}/unhide`, { method: "POST" }),
+  recheckFreshness: (id) => request(`/admin/listings/${id}/recheck-freshness`, { method: "POST" }),
+  getAdminDisputes: () => request("/admin/disputes"),
+  resolveDispute: (id, resolution) => request(`/admin/disputes/${id}/resolve`, { method: "POST", body: JSON.stringify({ resolution }) }),
+
+  // Public
+  getDisputes: () => request("/disputes"),
   getStats: () => request("/stats"),
-  rateAgent: (slug, stars, comment) => request(`/agents/${slug}/rate`, { method: "POST", body: JSON.stringify({ stars, comment }) }),
+
+  // Auth
   me: () => request("/me"),
   devLogin: (name, role) => request("/auth/dev-login", { method: "POST", body: JSON.stringify({ name, role }) }),
   logout: () => request("/auth/logout", { method: "POST" }),
 };
-
-// SSE-style streaming over fetch + ReadableStream (works with POST, unlike EventSource).
-export async function runAgentStream(slug, inputs, { onChunk, onDone, onError }) {
-  const res = await fetch(`${BASE}/agents/${slug}/run`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ inputs }),
-  });
-
-  if (!res.ok || !res.body) {
-    const body = await res.json().catch(() => ({}));
-    onError?.(body.error || `Request failed (${res.status})`);
-    return;
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const events = buffer.split("\n\n");
-    buffer = events.pop(); // keep the last partial event in the buffer
-
-    for (const raw of events) {
-      const eventMatch = raw.match(/^event: (.+)$/m);
-      const dataMatch = raw.match(/^data: (.+)$/m);
-      if (!eventMatch || !dataMatch) continue;
-      const event = eventMatch[1];
-      const data = JSON.parse(dataMatch[1]);
-
-      if (event === "chunk") onChunk?.(data.text);
-      else if (event === "done") onDone?.(data);
-      else if (event === "error") onError?.(data.message);
-    }
-  }
-}

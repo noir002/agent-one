@@ -1,0 +1,25 @@
+{
+  "name": "@agentone/api",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/app.js",
+    "start": "node src/app.js",
+    "seed": "node seed/seed.js",
+    "freshness:check": "node scripts/freshnessCheck.js"
+  },
+  "dependencies": {
+    "@agentone/shared": "*",
+    "cookie-session": "^2.1.0",
+    "csv-parse": "^7.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
+    "yaml": "^2.5.1"
+  }
+}

@@ -1,0 +1,13 @@
+# Shared dev image for the api, worker and client services — each container
+# runs a different workspace script (see docker-compose.yml's `command:`).
+# Source is bind-mounted at runtime for live-reload; this just gets
+# dependencies installed once at build time.
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json ./
+COPY api/package.json ./api/package.json
+COPY worker/package.json ./worker/package.json
+COPY client/package.json ./client/package.json
+COPY shared/package.json ./shared/package.json
+RUN npm install
+COPY . .
