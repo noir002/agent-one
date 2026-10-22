@@ -7,6 +7,9 @@ export default function Nav({ me, onLogout }) {
         Agent One
       </Link>
       <div className="flex items-center gap-3">
+        <Link to="/leaderboard" className="hidden text-sm text-ink-muted hover:text-ink sm:inline">
+          Leaderboard
+        </Link>
         {me?.user ? (
           <>
             <span className="hidden text-sm text-ink-muted sm:inline">

@@ -11,6 +11,8 @@ export default function Agent({ me, onRan }) {
   const [error, setError] = useState("");
   const [shareId, setShareId] = useState(null);
   const [loadError, setLoadError] = useState("");
+  const [rating, setRating] = useState(null);
+  const [rateMessage, setRateMessage] = useState("");
 
   useEffect(() => {
     api.getAgent(slug)
@@ -40,6 +42,16 @@ export default function Agent({ me, onRan }) {
     });
   };
 
+  const handleRate = async (stars) => {
+    setRating(stars);
+    try {
+      const result = await api.rateAgent(slug, stars);
+      setRateMessage(`Thanks! Agent score is now ${result.score}.`);
+    } catch (err) {
+      setRateMessage(err.message);
+    }
+  };
+
   if (loadError) return <p className="py-10 text-center text-red-600">{loadError}</p>;
   if (!agent) return <p className="py-10 text-center text-ink-muted">Loading…</p>;
 
@@ -57,6 +69,15 @@ export default function Agent({ me, onRan }) {
           <div className="text-xs uppercase text-ink-muted">{agent.status}</div>
         </div>
       </div>
+
+      {agent.isExternal && (
+        <div className="mt-4 rounded-card border border-border-pill bg-panel px-4 py-3 text-sm text-ink-muted">
+          {agent.disclaimer}{" "}
+          <a href={agent.platformUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald hover:underline">
+            Visit the official platform ↗
+          </a>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <form onSubmit={handleRun} className="card space-y-4">
@@ -100,15 +121,41 @@ export default function Agent({ me, onRan }) {
           {error && <p className="text-sm text-red-600">{error}</p>}
         </form>
 
-        <div className="card min-h-[200px] whitespace-pre-wrap font-mono text-sm">
-          {output || <span className="text-ink-muted">Output will stream here.</span>}
-          {shareId && (
-            <div className="mt-4 border-t border-border-card pt-3 font-sans">
-              <Link to={`/r/${shareId}`} className="text-sm text-emerald hover:underline">
-                View shareable link →
-              </Link>
-            </div>
-          )}
+        <div>
+          <div className="card min-h-[200px] whitespace-pre-wrap font-mono text-sm">
+            {output || <span className="text-ink-muted">Output will stream here.</span>}
+            {shareId && (
+              <div className="mt-4 border-t border-border-card pt-3 font-sans">
+                <Link to={`/r/${shareId}`} className="text-sm text-emerald hover:underline">
+                  View shareable link →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div className="card mt-4 font-sans">
+            <p className="mb-2 text-sm font-medium">Rate this agent</p>
+            {me?.user ? (
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => handleRate(n)}
+                    className={`text-xl ${rating && n <= rating ? "text-emerald" : "text-border-pill"}`}
+                    aria-label={`${n} star`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-ink-muted">
+                <Link to="/login" className="text-emerald hover:underline">Sign in</Link> to rate this agent.
+              </p>
+            )}
+            {rateMessage && <p className="mt-2 text-sm text-ink-muted">{rateMessage}</p>}
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,10 @@
 # Agent One — A Forest of AI Agents
 
-A free hub of student AI agents, shown as a forest. This is Milestone 1 of the
-prototype: the data model, the generic agent runner, dev-mode auth, and a
-forest → agent → sandbox → run → share flow for 3 seed agents.
+A free hub of student AI agents, shown as a forest. Through Milestone 2: the
+full 24-agent native catalogue, 10 unofficial "inspired by" prototypes of
+popular third-party AI tools, the check job + credibility scoring, ratings,
+and the leaderboard — on top of Milestone 1's generic runner, dev-mode auth,
+and forest → agent → sandbox → run → share flow.
 
 ## Quickstart (under 10 minutes)
 
@@ -44,7 +46,8 @@ LLM_MODEL=gemini-2.0-flash   # or e.g. llama-3.1-8b-instant for groq
 ```
 Confirm the provider's current free-tier rate limits before relying on this
 for a live demo — they change over time. No code changes are needed; the
-runner and (in a later milestone) the check job both call the same adapter.
+runner and the check job both call the same adapter
+(`server/src/llm/adapter.js`).
 
 ## Switching to real Google sign-in
 
@@ -53,22 +56,47 @@ Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_CALLBACK_URL` in
 `/api/auth/google/callback` automatically; dev-mode login keeps working
 alongside it.
 
-## What's built in Milestone 1
+## The agent catalogue
 
-- Mongo models: `User`, `Agent`, `Run`, `Rating`, `Check` (ratings/checks are
-  defined now, used starting Milestone 2).
-- Generic runner (`server/src/runner/run.js`): validates inputs, enforces
-  daily run limits (20/signed-in, 3/visitor), builds the prompt, streams the
-  LLM response over SSE, persists the run with a shareable link.
-- LLM adapter (`server/src/llm/adapter.js`): `mock` | `gemini` | `groq`,
-  selected by `LLM_PROVIDER`.
-- Auth: dev-mode login (`POST /api/auth/dev-login`) always available; Google
-  OAuth wired but optional.
-- 3 seed agents across 3 groves: PYQ Solver (exams), Concept Explainer
-  (study), DSA Hint Mentor (code) — `server/seed/agents/*.json`.
-- Client: forest home page with live search, agent sandbox page with
-  streamed output, public shared-run page, dev login page.
+- **24 native agents** across all 6 groves (study, exams, code, career,
+  research, productivity) — `server/seed/agents/*.json`.
+- **10 third-party-inspired prototypes** — `server/seed/external/*.json`.
+  Each is an *unofficial* demo of a popular AI tool (ChatGPT, Google Gemini,
+  GitHub Copilot, Perplexity, Notion AI, Grammarly, Replit AI, Character.AI,
+  Jasper AI, QuillBot): the agent page shows a disclaimer ("inspired by —
+  not affiliated with or endorsed by...") and a link to the real platform,
+  and the sandbox run goes through our own generic runner/LLM adapter, not
+  the real service. This avoids implying affiliation we don't have while
+  still giving a working, interactive demo.
 
-Not yet built (later milestones): the remaining 21 agents, the check job and
-credibility scoring, uploads, ratings, the leaderboard, and the full 390px
-responsive pass.
+## Credibility scoring
+
+`server/src/scoring/score.js` implements the brief's formula exactly:
+`Score = 40·P + 30·((R-1)/4)·C + 20·S + 10·F`. It's recomputed after every
+rating and every 10 runs (`server/src/routes/agents.js`). Run
+```bash
+npm run check:all
+```
+from `/server` to run every agent's test cases through the LLM adapter, do a
+safety review, and print a pass-rate table — this is what the brief's kickoff
+prompt asks for "at the end." **In mock mode the pass rate is not
+representative** (the mock adapter returns generic templated text, so most
+`mustInclude` checks fail by design) — set a real `LLM_PROVIDER`/`LLM_API_KEY`
+for a meaningful run.
+
+## What's built through Milestone 2
+
+- Everything from Milestone 1 (generic runner, LLM adapter, dev/Google auth,
+  run limits, shared run pages).
+- All 24 native agents + 10 external prototypes, seeded from JSON configs.
+- Check job (`server/src/checks/runCheck.js`): runs test cases, checks
+  `mustInclude` terms, does an LLM safety review, stores a `Check` document.
+- Credibility scoring and badges (seedling / growing / verified).
+- Ratings (`POST /api/agents/:slug/rate`), the leaderboard
+  (`GET /api/leaderboard`), and platform stats (`GET /api/stats`).
+- Client: grove pages (`/grove/:grove`), the leaderboard page, star ratings
+  on the agent page, external-agent disclaimers and outbound links.
+
+Not yet built (later milestones): the upload flow (with pre-publish checks),
+recent-runs panel on the agent page, admin verified-review flow, and the full
+390px responsive pass across every page.

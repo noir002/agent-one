@@ -43,7 +43,8 @@ export default function Home({ me }) {
           A forest of AI agents,<br />grown by students.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-ink-muted">
-          24 free agents for study, exams, code, career, research and productivity. Run one, rate it, or plant your own.
+          24 native agents plus 10 unofficial prototypes inspired by popular AI tools, across study, exams,
+          code, career, research and productivity. Run one, rate it, or plant your own.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <a href="#forest" className="btn-primary">Explore the forest</a>
@@ -66,9 +67,9 @@ export default function Home({ me }) {
       <div id="forest" className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {filtered.map((grove) => (
           <div key={grove.grove} className="card">
-            <h2 className="font-serif text-xl font-semibold capitalize">
+            <Link to={`/grove/${grove.grove}`} className="font-serif text-xl font-semibold capitalize hover:text-emerald">
               {GROVE_LABELS[grove.grove] || grove.grove}
-            </h2>
+            </Link>
             <div className="mt-3 flex flex-wrap gap-2">
               {grove.agents.map((agent) => (
                 <Link
@@ -77,7 +78,7 @@ export default function Home({ me }) {
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${badgeColor(agent.badge)}`}
                   title={agent.tagline}
                 >
-                  {agent.name} · {agent.score}
+                  {agent.name} · {agent.score}{agent.isExternal && " ↗"}
                 </Link>
               ))}
               {grove.agents.length === 0 && (
