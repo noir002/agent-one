@@ -9,6 +9,8 @@ import forestRoutes from "./routes/forest.js";
 import agentsRoutes from "./routes/agents.js";
 import runsRoutes from "./routes/runs.js";
 import authRoutes from "./routes/auth.js";
+import leaderboardRoutes from "./routes/leaderboard.js";
+import statsRoutes from "./routes/stats.js";
 import devAuthRoutes from "./auth/devAuth.js";
 import { isGoogleConfigured, configureGoogleAuth } from "./auth/googleAuth.js";
 
@@ -34,6 +36,8 @@ app.use("/api/forest", forestRoutes);
 app.use("/api/agents", agentsRoutes);
 app.use("/api/runs", runsRoutes);
 app.use("/api/me", authRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/stats", statsRoutes);
 app.use("/api/auth", devAuthRoutes);
 
 if (isGoogleConfigured()) {
