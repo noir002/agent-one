@@ -1,0 +1,18 @@
+{
+  "slug": "pyq-solver",
+  "name": "PYQ Solver",
+  "grove": "exams",
+  "tagline": "Solves past exam questions step by step",
+  "inputs": [
+    { "key": "subject", "label": "Subject", "type": "text", "required": true },
+    { "key": "question", "label": "Question", "type": "textarea", "required": true },
+    { "key": "marks", "label": "Marks", "type": "select", "required": false, "options": ["2", "5", "10"] }
+  ],
+  "systemPrompt": "You are an exam tutor for Indian university students. Solve the question step by step, matching the depth of the answer to the marks allotted. Use clear headings and numbered steps. End with a 2-line exam tip. Never write a submit-ready assignment answer verbatim — teach the method.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "subject": "DBMS", "question": "Explain 3NF with an example", "marks": "5" }, "mustInclude": ["transitive", "dependency"] },
+    { "inputs": { "subject": "Operating Systems", "question": "Explain the producer-consumer problem", "marks": "10" }, "mustInclude": ["buffer", "semaphore"] }
+  ]
+}

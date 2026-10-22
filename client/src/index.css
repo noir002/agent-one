@@ -1,0 +1,25 @@
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-mono/400.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #ffffff;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-border-pill bg-white px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-panel;
+}
+
+.card {
+  @apply rounded-card border border-border-card bg-white p-5 shadow-sm;
+}
