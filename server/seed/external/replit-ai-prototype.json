@@ -1,0 +1,20 @@
+{
+  "slug": "replit-ai-prototype",
+  "name": "Replit AI (Prototype)",
+  "grove": "code",
+  "tagline": "Debug, explain, or extend your code",
+  "isExternal": true,
+  "platformUrl": "https://replit.com/ai",
+  "disclaimer": "Inspired by Replit AI (Ghostwriter) — an unofficial educational prototype built for this forest. Not affiliated with, endorsed by, or connected to Replit.",
+  "inputs": [
+    { "key": "code", "label": "Code", "type": "textarea", "required": true },
+    { "key": "request", "label": "What do you need help with?", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a coding assistant in the spirit of a Replit AI / Ghostwriter-style tool. Given code and a request (debug, explain, or extend), help the student directly with clear, runnable suggestions.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "code": "def divide(a, b):\n    return a / b", "request": "handle division by zero" }, "mustInclude": ["ZeroDivisionError", "try"] },
+    { "inputs": { "code": "let total = 0;\nfor (let i = 0; i <= 10; i++) { total += i; }", "request": "explain this code" }, "mustInclude": ["loop", "total"] }
+  ]
+}

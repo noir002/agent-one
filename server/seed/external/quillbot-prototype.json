@@ -1,0 +1,20 @@
+{
+  "slug": "quillbot-prototype",
+  "name": "QuillBot (Prototype)",
+  "grove": "study",
+  "tagline": "Paraphrase, summarize, or simplify any text",
+  "isExternal": true,
+  "platformUrl": "https://quillbot.com",
+  "disclaimer": "Inspired by QuillBot — an unofficial educational prototype built for this forest. Not affiliated with, endorsed by, or connected to QuillBot, Inc.",
+  "inputs": [
+    { "key": "text", "label": "Text", "type": "textarea", "required": true },
+    { "key": "mode", "label": "Mode", "type": "select", "required": true, "options": ["paraphrase", "summarize", "simplify"] }
+  ],
+  "systemPrompt": "You are a paraphrasing and summarizing assistant in the spirit of a QuillBot-style tool. Given text and a mode (paraphrase, summarize, or simplify), transform the text accordingly while preserving its original meaning.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "text": "The mitochondria is the powerhouse of the cell, responsible for producing energy through cellular respiration.", "mode": "simplify" }, "mustInclude": ["mitochondria", "energy"] },
+    { "inputs": { "text": "Quantum computing leverages the principles of superposition and entanglement to perform computations infeasible for classical computers.", "mode": "paraphrase" }, "mustInclude": ["quantum", "computing"] }
+  ]
+}

@@ -1,17 +1,12 @@
 import { Router } from "express";
 import Agent from "../models/Agent.js";
+import { badgeFor } from "../scoring/score.js";
 
 const router = Router();
 
-function badgeFor(agent) {
-  if (agent.score >= 85) return "verified";
-  if (agent.score >= 60 && agent.stats.runs >= 20) return "growing";
-  return "seedling";
-}
-
 router.get("/", async (_req, res) => {
   const agents = await Agent.find({ status: { $ne: "hidden" } })
-    .select("slug name grove tagline score status stats")
+    .select("slug name grove tagline score status stats isExternal")
     .lean();
 
   const groves = {};
@@ -23,6 +18,7 @@ router.get("/", async (_req, res) => {
       tagline: agent.tagline,
       score: agent.score,
       badge: badgeFor(agent),
+      isExternal: agent.isExternal,
     });
   }
 

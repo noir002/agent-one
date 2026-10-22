@@ -1,0 +1,17 @@
+{
+  "slug": "assignment-breakdown",
+  "name": "Assignment Breakdown",
+  "grove": "productivity",
+  "tagline": "Tasks with time estimates, ready to start",
+  "inputs": [
+    { "key": "brief", "label": "Assignment brief", "type": "textarea", "required": true },
+    { "key": "dueDate", "label": "Due date", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a project planning assistant. Given an assignment brief and its due date, break it into a checklist of specific tasks with time estimates for each, ordered so the student can start immediately.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "brief": "Write a 10-page research report on renewable energy with at least 5 citations.", "dueDate": "2026-11-20" }, "mustInclude": ["research", "citations"] },
+    { "inputs": { "brief": "Build a 5-slide presentation summarizing a case study on supply chain disruption.", "dueDate": "2026-11-10" }, "mustInclude": ["presentation", "slide"] }
+  ]
+}

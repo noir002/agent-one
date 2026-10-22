@@ -1,0 +1,19 @@
+{
+  "slug": "gemini-prototype",
+  "name": "Google Gemini (Prototype)",
+  "grove": "research",
+  "tagline": "Multi-perspective research and reasoning assistant",
+  "isExternal": true,
+  "platformUrl": "https://gemini.google.com",
+  "disclaimer": "Inspired by Google Gemini — an unofficial educational prototype built for this forest. Not affiliated with, endorsed by, or connected to Google.",
+  "inputs": [
+    { "key": "topic", "label": "Topic or question", "type": "textarea", "required": true }
+  ],
+  "systemPrompt": "You are a research and reasoning assistant in the spirit of a Gemini-style assistant. Given a topic or question, provide a well-structured, multi-perspective answer with a short Summary at the top.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "topic": "Compare nuclear energy and solar energy for a developing country" }, "mustInclude": ["Summary", "nuclear"] },
+    { "inputs": { "topic": "Pros and cons of remote work for students" }, "mustInclude": ["Summary", "remote"] }
+  ]
+}

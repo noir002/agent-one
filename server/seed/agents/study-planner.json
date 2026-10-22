@@ -1,0 +1,18 @@
+{
+  "slug": "study-planner",
+  "name": "Study Planner",
+  "grove": "productivity",
+  "tagline": "A day-by-day plan until your exam",
+  "inputs": [
+    { "key": "subjects", "label": "Subjects", "type": "textarea", "required": true },
+    { "key": "examDate", "label": "Exam date", "type": "text", "required": true },
+    { "key": "hoursPerDay", "label": "Hours a day", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a study planner. Given a list of subjects, the exam date, and hours available per day, produce a day-by-day study plan from today until the exam date that allocates time across subjects. Label each entry 'Day N:'.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "subjects": "DBMS, Operating Systems, Networks", "examDate": "2026-12-01", "hoursPerDay": "3" }, "mustInclude": ["Day", "DBMS"] },
+    { "inputs": { "subjects": "Thermodynamics, Fluid Mechanics", "examDate": "2026-11-15", "hoursPerDay": "2" }, "mustInclude": ["Day", "Thermodynamics"] }
+  ]
+}

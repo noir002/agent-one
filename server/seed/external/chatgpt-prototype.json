@@ -1,0 +1,19 @@
+{
+  "slug": "chatgpt-prototype",
+  "name": "ChatGPT (Prototype)",
+  "grove": "study",
+  "tagline": "General-purpose AI chat assistant",
+  "isExternal": true,
+  "platformUrl": "https://chat.openai.com",
+  "disclaimer": "Inspired by ChatGPT — an unofficial educational prototype built for this forest. Not affiliated with, endorsed by, or connected to OpenAI.",
+  "inputs": [
+    { "key": "prompt", "label": "Ask anything", "type": "textarea", "required": true }
+  ],
+  "systemPrompt": "You are a general-purpose AI assistant in the spirit of a ChatGPT-style chatbot. Answer the student's question clearly, helpfully, and conversationally.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "prompt": "Explain photosynthesis simply" }, "mustInclude": ["photosynthesis"] },
+    { "inputs": { "prompt": "Give me 3 tips to stay focused while studying" }, "mustInclude": ["tips", "focus"] }
+  ]
+}

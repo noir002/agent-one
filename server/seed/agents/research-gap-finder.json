@@ -1,0 +1,17 @@
+{
+  "slug": "research-gap-finder",
+  "name": "Research Gap Finder",
+  "grove": "research",
+  "tagline": "Gaps and possible project ideas from a few abstracts",
+  "inputs": [
+    { "key": "topic", "label": "Topic", "type": "text", "required": true },
+    { "key": "abstracts", "label": "2-3 paper abstracts", "type": "textarea", "required": true }
+  ],
+  "systemPrompt": "You are a research advisor. Given a topic and 2-3 paper abstracts, identify gaps in the existing research and suggest 3 possible project ideas that address those gaps.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "topic": "Sentiment analysis", "abstracts": "Paper 1 uses LSTM for sentiment analysis on English tweets. Paper 2 uses BERT for sentiment analysis on English reviews." }, "mustInclude": ["gap", "project"] },
+    { "inputs": { "topic": "Solar energy forecasting", "abstracts": "Paper 1 forecasts solar output using linear regression. Paper 2 uses weather data with random forests." }, "mustInclude": ["gap", "project"] }
+  ]
+}

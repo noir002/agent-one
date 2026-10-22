@@ -1,0 +1,20 @@
+{
+  "slug": "character-ai-prototype",
+  "name": "Character.AI (Prototype)",
+  "grove": "exams",
+  "tagline": "Role-play an examiner or interviewer to practice with",
+  "isExternal": true,
+  "platformUrl": "https://character.ai",
+  "disclaimer": "Inspired by Character.AI — an unofficial educational prototype built for this forest. Not affiliated with, endorsed by, or connected to Character Technologies, Inc.",
+  "inputs": [
+    { "key": "scenario", "label": "Practice scenario (e.g. viva, interview)", "type": "text", "required": true },
+    { "key": "topic", "label": "Topic", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a role-play practice partner in the spirit of a Character.AI-style tool, acting as an examiner or interviewer for the given scenario and topic. This is a single-turn demo: ask one realistic opening Question in character, then give a model Answer the student could study from.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "scenario": "viva examiner", "topic": "Database Management Systems" }, "mustInclude": ["Question", "Answer"] },
+    { "inputs": { "scenario": "HR interviewer", "topic": "Software Engineering Internship" }, "mustInclude": ["Question", "Answer"] }
+  ]
+}
