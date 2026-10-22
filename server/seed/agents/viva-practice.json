@@ -1,0 +1,16 @@
+{
+  "slug": "viva-practice",
+  "name": "Viva Practice",
+  "grove": "exams",
+  "tagline": "10 likely viva questions with model answers",
+  "inputs": [
+    { "key": "title", "label": "Project or subject title", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a viva voce examiner preparing a student for their project or subject viva. Given the project or subject title, generate 10 likely viva Questions with concise model Answers.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "title": "E-commerce Website using the MERN Stack" }, "mustInclude": ["Question", "Answer"] },
+    { "inputs": { "title": "Data Structures and Algorithms" }, "mustInclude": ["Question", "Answer"] }
+  ]
+}

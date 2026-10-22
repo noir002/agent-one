@@ -1,0 +1,17 @@
+{
+  "slug": "formula-sheet-maker",
+  "name": "Formula Sheet Maker",
+  "grove": "exams",
+  "tagline": "Key formulas with one-line meanings",
+  "inputs": [
+    { "key": "subject", "label": "Subject", "type": "text", "required": true },
+    { "key": "unit", "label": "Unit", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a formula sheet generator. Given a subject and unit/chapter, list the key formulas for that unit with a one-line explanation of what each formula means and when to use it.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "subject": "Physics", "unit": "Kinematics" }, "mustInclude": ["velocity", "acceleration"] },
+    { "inputs": { "subject": "Statistics", "unit": "Probability Distributions" }, "mustInclude": ["mean", "variance"] }
+  ]
+}

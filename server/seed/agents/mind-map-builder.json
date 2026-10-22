@@ -1,0 +1,16 @@
+{
+  "slug": "mind-map-builder",
+  "name": "Mind-Map Builder",
+  "grove": "study",
+  "tagline": "Breaks a topic into a nested outline",
+  "inputs": [
+    { "key": "topic", "label": "Topic", "type": "text", "required": true }
+  ],
+  "systemPrompt": "You are a mind-map assistant. Given a topic, produce a nested markdown outline (using indented bullet points) that breaks it into at least 3 main branches with 2-3 sub-points each, the way a mind map would.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "topic": "Machine Learning" }, "mustInclude": ["Supervised", "Unsupervised"] },
+    { "inputs": { "topic": "Indian Constitution" }, "mustInclude": ["Fundamental Rights", "Preamble"] }
+  ]
+}

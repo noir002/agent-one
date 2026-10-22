@@ -1,0 +1,19 @@
+{
+  "slug": "mock-quiz-generator",
+  "name": "Mock Quiz Generator",
+  "grove": "exams",
+  "tagline": "MCQs with answers and explanations",
+  "inputs": [
+    { "key": "subject", "label": "Subject", "type": "text", "required": true },
+    { "key": "topic", "label": "Topic", "type": "text", "required": true },
+    { "key": "difficulty", "label": "Difficulty", "type": "select", "required": false, "options": ["easy", "medium", "hard"] },
+    { "key": "count", "label": "Count", "type": "select", "required": false, "options": ["5", "10"] }
+  ],
+  "systemPrompt": "You are an exam quiz generator for Indian university students. Given a subject and topic, generate the requested number of multiple-choice questions at the requested difficulty. Each question has 4 options, marks the correct Answer, and gives a one-line Explanation.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "subject": "DBMS", "topic": "Normalization", "difficulty": "medium", "count": "5" }, "mustInclude": ["Answer", "Explanation"] },
+    { "inputs": { "subject": "Computer Networks", "topic": "OSI Model", "difficulty": "easy", "count": "5" }, "mustInclude": ["Answer", "Explanation"] }
+  ]
+}

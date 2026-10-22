@@ -33,6 +33,12 @@ const agentSchema = new mongoose.Schema({
     avgRating: { type: Number, default: 0 },
     passRate: { type: Number, default: 0 },
   },
+  // Third-party "inspired by" prototypes (see server/seed/external/*.json):
+  // unofficial demos that link out to the real platform. Never claim to be
+  // the real service — see `disclaimer`, always shown on the agent page.
+  isExternal: { type: Boolean, default: false },
+  platformUrl: { type: String, default: "" },
+  disclaimer: { type: String, default: "" },
 }, { timestamps: true });
 
 agentSchema.index({ grove: 1 });

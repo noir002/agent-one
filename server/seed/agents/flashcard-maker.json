@@ -1,0 +1,17 @@
+{
+  "slug": "flashcard-maker",
+  "name": "Flashcard Maker",
+  "grove": "study",
+  "tagline": "Turns a topic or notes into Q/A flashcards",
+  "inputs": [
+    { "key": "topic", "label": "Topic or notes", "type": "textarea", "required": true },
+    { "key": "count", "label": "Count", "type": "select", "required": false, "options": ["5", "10", "15"] }
+  ],
+  "systemPrompt": "You are a flashcard generator for exam revision. Given a topic or pasted notes, produce the requested number of flashcards as a markdown table with two columns: Question and Answer. Keep answers short and precise.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "topic": "Cell organelles and their functions", "count": "5" }, "mustInclude": ["Question", "Answer"] },
+    { "inputs": { "topic": "Big-O notation basics", "count": "10" }, "mustInclude": ["Question", "Answer"] }
+  ]
+}

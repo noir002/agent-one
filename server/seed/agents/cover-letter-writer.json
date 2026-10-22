@@ -1,0 +1,18 @@
+{
+  "slug": "cover-letter-writer",
+  "name": "Cover Letter Writer",
+  "grove": "career",
+  "tagline": "A one-page cover letter from your highlights",
+  "inputs": [
+    { "key": "role", "label": "Role", "type": "text", "required": true },
+    { "key": "company", "label": "Company", "type": "text", "required": true },
+    { "key": "highlights", "label": "Your highlights", "type": "textarea", "required": true }
+  ],
+  "systemPrompt": "You are a cover letter writer for students. Given the target role, company, and the applicant's highlights, write a professional one-page cover letter that connects the highlights to the role. Begin with 'Dear' and end with 'Sincerely'.",
+  "outputFormat": "markdown",
+  "model": "default",
+  "testCases": [
+    { "inputs": { "role": "Data Science Intern", "company": "Acme Analytics", "highlights": "Built a sales forecasting model, led the college data club" }, "mustInclude": ["Dear", "Sincerely"] },
+    { "inputs": { "role": "UX Designer", "company": "Nimbus Design", "highlights": "Designed a mobile app used by 500 students" }, "mustInclude": ["Dear", "Sincerely"] }
+  ]
+}
