@@ -1,7 +1,12 @@
-// A single adapter the runner and the check job both call, so swapping
-// providers later never touches calling code. generate() always returns
-// an async generator yielding text chunks, terminating with a final
+// A single adapter the runner, the judge and the flagships all call, so
+// swapping providers later never touches calling code. generate() always
+// returns an async generator yielding text chunks, terminating with a final
 // { done: true, fullText, tokens } object.
+//
+// provider/apiKey can be passed per-call (not just read from process.env) —
+// this is what lets the flagships' "Try it" UI support bring-your-own-key
+// without mutating global env state, which would race across concurrent
+// requests from different visitors.
 
 function* wordChunks(text) {
   const words = text.split(" ");
@@ -29,8 +34,7 @@ async function* mockGenerate({ system, user }) {
   return { fullText, tokens: Math.ceil(fullText.length / 4) };
 }
 
-async function* geminiGenerate({ system, user, model, maxTokens }) {
-  const apiKey = process.env.LLM_API_KEY;
+async function* geminiGenerate({ system, user, model, maxTokens, apiKey }) {
   const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || "gemini-2.0-flash");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
@@ -53,8 +57,7 @@ async function* geminiGenerate({ system, user, model, maxTokens }) {
   return { fullText, tokens: data.usageMetadata?.totalTokenCount || Math.ceil(fullText.length / 4) };
 }
 
-async function* groqGenerate({ system, user, model, maxTokens }) {
-  const apiKey = process.env.LLM_API_KEY;
+async function* groqGenerate({ system, user, model, maxTokens, apiKey }) {
   const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || "llama-3.1-8b-instant");
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -83,8 +86,10 @@ async function* groqGenerate({ system, user, model, maxTokens }) {
 }
 
 export function generate(args) {
-  const provider = (process.env.LLM_PROVIDER || "mock").toLowerCase();
-  if (provider === "gemini") return geminiGenerate(args);
-  if (provider === "groq") return groqGenerate(args);
-  return mockGenerate(args);
+  const provider = (args.provider || process.env.LLM_PROVIDER || "mock").toLowerCase();
+  const apiKey = args.apiKey || process.env.LLM_API_KEY;
+  const callArgs = { ...args, apiKey };
+  if (provider === "gemini") return geminiGenerate(callArgs);
+  if (provider === "groq") return groqGenerate(callArgs);
+  return mockGenerate(callArgs);
 }

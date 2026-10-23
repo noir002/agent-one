@@ -54,7 +54,7 @@ async function checkSyntax(content, language) {
 // same sandbox primitive the L3 runner uses) is real regardless of LLM
 // quality; "ask the LLM for a fix" honestly returns mock output until a
 // real LLM_PROVIDER/LLM_API_KEY is set — see README.
-export async function runRepoFixer({ input, files }) {
+export async function runRepoFixer({ input, files, llmOverride }) {
   const send = (event, data) => ({ event, data });
   const events = [];
   const emit = (event, data) => events.push(send(event, data));
@@ -106,6 +106,7 @@ export async function runRepoFixer({ input, files }) {
       user: prompt,
       model: "default",
       maxTokens: 500,
+      ...llmOverride,
     }));
     emit("tool_call", { tool: "fs.write", input: file.path });
 
