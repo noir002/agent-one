@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { loadRootEnv } from "@agentone/shared/loadEnv.js";
+loadRootEnv();
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";

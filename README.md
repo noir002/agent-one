@@ -5,12 +5,11 @@ recorded test run — not a star rating or a human glancing at a landing page.
 This replaces an earlier v1 prototype (a hub of prompt-template "agents");
 v2 is a full rewrite to a different product, stack and data model. See
 [`docs/v2 · Real-agent HLD.pdf`](docs/v2%20%C2%B7%20Real-agent%20HLD.pdf)
-for the full spec. **This is Phase 1: Directory
-core** — listings, the seed catalogue, directory browsing (including the 3D
-forest), freshness checks, owner claims, and the admin console. Phase 2 (the
-real eval harness — BullMQ, sandboxed runners, grading, scoring) is
-scaffolded at the infra level but not built yet, since Phase 1 doesn't score
-anything.
+for the full spec. **Through Phase 2: the eval harness** — BullMQ job
+orchestration, SSRF-safe runners (`http` and `mcp`), deterministic + LLM-judge
+grading, and the real 3-run/5-part scoring pipeline — on top of Phase 1's
+directory core (listings, the seed catalogue, directory browsing including
+the 3D forest, freshness checks, owner claims, admin console).
 
 ## Quickstart (under 10 minutes)
 
@@ -30,20 +29,54 @@ anything.
    ```bash
    npm install
    ```
-4. **Seed the catalogue**:
+4. **Seed the catalogue and the test tasks**:
    ```bash
-   cd api && npm run seed
+   cd api && npm run seed && npm run seed:tasks
    ```
 5. **Run it** — three processes, each in its own terminal:
    ```bash
    cd api && npm run dev       # http://localhost:4000
-   cd worker && npm run dev    # connects to Redis, idle until Phase 2
+   cd worker && npm run dev    # the real eval-run processor as of Phase 2
    cd client && npm run dev    # http://localhost:5173
    ```
    Or `docker compose up` from the repo root to run all five services
    (mongo, redis, api, worker, client) in containers at once.
 6. Open http://localhost:5173 — the forest should show 25 real listings
    across 5 categories immediately, no sign-in or API key required.
+
+## Running an evaluation (Phase 2)
+
+None of the 25 real seed listings have a connected endpoint yet — Phase 1
+never completed a claim, and Phase 2's job is the harness, not outreach to
+real owners. To see the harness run for real, point a manifest at the
+**dev-only test fixtures** instead of a real listing:
+
+```bash
+# in two more terminals, from /api
+npm run fixture:echo-agent   # implements the Task API contract, port 4100
+npm run fixture:echo-mcp     # same thing over MCP, port 4101
+```
+
+Then, signed in as an admin (dev-login), connect one of the fixtures as a
+listing's manifest — this is also exactly how a real owner connects theirs:
+
+```bash
+curl -X POST http://localhost:4000/api/listings/aider/manifest \
+  -H "Content-Type: application/json" \
+  --data '{"yaml": "name: aider\nversion: \"1.0.0\"\ncategory: code\nsummary: test\nowner:\n  name: Test\n  contact: test@example.com\n  verify: dns\ninterface:\n  type: http\n  endpoint: http://localhost:4100/run\npermissions:\n  network: none\n  max_steps: 10\n  max_cost_usd: 0.5\n  timeout_s: 60\npricing: { model: free }\n"}'
+```
+
+Submitting a manifest with a new version auto-queues an `EvalRun`; so does
+`POST /api/listings/:slug/evaluate`. Watch the worker's logs for
+`eval run ... done — score N`, then `GET /api/listings/aider` to see the
+tier promoted to L2 and `score`/`scoreParts` populated.
+
+**Local-dev-only note**: the harness's SSRF protection blocks loopback
+addresses by default (same as private ranges and cloud metadata) — the
+fixtures above only work with `ALLOW_LOOPBACK_ENDPOINTS=true` in `.env`.
+Private ranges and the metadata address stay blocked either way; see the
+comment above that var in `.env.example` before ever considering it outside
+local dev.
 
 ## The seed catalogue — real facts, not fabricated
 
@@ -77,10 +110,11 @@ LLM_PROVIDER=gemini   # or groq
 LLM_API_KEY=your-key-here
 LLM_MODEL=gemini-2.0-flash
 ```
-Not used by anything in Phase 1 — this is here now because Phase 2's eval
-harness (the LLM judge) and the flagship agents (Repo Fixer, Cited
-Researcher) will call the same adapter (`api/src/llm/adapter.js`) without
-any code changes once that phase is built.
+The harness's LLM judge (`api/src/harness/grading/judge.js`) calls this
+adapter — with `LLM_PROVIDER=mock` it explicitly skips grading rather than
+pretending to judge anything (`verdict: "SKIPPED"`), so a mock-mode eval run
+is graded on deterministic checks only. The flagship agents (Phase 4) will
+use the same adapter without any code changes.
 
 ## Switching to real GitHub/Google sign-in
 
@@ -118,10 +152,55 @@ early. Revisit with `npm audit fix --force` before any public deployment.
   devices/`prefers-reduced-motion` — both verified working in-browser.
 - Verified at 390px width with no horizontal overflow.
 
-Not yet built (Phase 2+): the eval harness itself (manifest-driven runners,
-SSRF-safe fetch, deterministic + LLM-judge grading, the 3-run/5-part
-scoring pipeline), task suites, the L3 Docker sandbox, the five flagship
-agents, share loops (badges, run pages, head-to-head), the MCP server /
-Agent Finder, and the monetization hooks. `OwnerDashboard` and the public
-`Disputes` page also don't exist as pages yet (the API routes they'd use
-already do).
+## What's built in Phase 2
+
+- Data model: `Task`, `EvalRun`, `TaskRun` — `api/src/models/`.
+- `api/src/harness/safeFetch.js` — SSRF-safe fetch: resolves + validates the
+  target IP against private/loopback/link-local/metadata/multicast ranges,
+  **pins the connection to that exact IP** (defeats DNS-rebinding TOCTOU),
+  and re-validates on every redirect hop. Verified by direct test: blocks
+  `169.254.169.254`, `10.0.0.5` and `192.168.1.1` unconditionally.
+- Runners: `httpRunner.js` (SSE Task API consumption, step-budget
+  enforcement) and `mcpRunner.js` (`@modelcontextprotocol/sdk` client) — both
+  verified end to end against local test fixtures, both runs and both grading
+  paths (pass and fail) confirmed correct.
+- Grading: deterministic checks (`grading/deterministic.js`) plus an LLM
+  judge (`grading/judge.js`) that fences agent output as untrusted data, the
+  same pattern v1 used for its safety-review check — a prompt injection in
+  agent output can't talk the judge into a pass.
+- Scoring (`scoring.js`): the exact 5-part formula, verified by hand against
+  real results (0.5 success × 50% + 1.0 × (15%+15%+10%) + ~1.0 × 10% = 75,
+  matching the logged score precisely).
+- BullMQ wiring: `api/src/queue/evalQueue.js` (producer) and
+  `worker/src/processors/evalRun.js` (the real processor, replacing Phase 1's
+  stub) — confirmed working through the actual queue, not just in isolation.
+- Manifest connection (`POST /api/listings/:slug/manifest`) and evaluation
+  trigger (`POST /api/listings/:slug/evaluate`) routes — a version bump
+  auto-queues an `EvalRun`, confirmed working twice in testing.
+- Two dev-only test fixtures (`api/dev-fixtures/`) implementing the Task API
+  contract over HTTP and MCP, since none of the 25 real listings have a
+  connected endpoint yet.
+
+**Three real bugs found and fixed during this phase's own testing** (not
+hypothetical — each one broke a real run until fixed):
+1. `dotenv/config` resolves `.env` relative to `process.cwd()`, so
+   `cd api && npm run dev` was silently loading nothing — every service now
+   uses `shared/loadEnv.js`, which resolves the repo-root `.env` regardless
+   of invocation style.
+2. Node's "Happy Eyeballs" dual-stack connect (default since Node 20) calls
+   a custom `lookup` function expecting a different callback shape when
+   racing multiple addresses — `safeFetch` now disables `autoSelectFamily`
+   and handles both callback shapes, since the connection is already pinned
+   to one pre-validated IP regardless.
+3. The MCP test fixture crashed on anything past the first task run: a
+   single shared transport across the harness's 6 sequential task runs
+   conflated every client's session into one, corrupting the others. Fixed
+   with the SDK's documented per-session-transport pattern.
+
+Not yet built (Phase 3+): the full 30-task suite (15/15, safety tasks,
+hidden/paraphrase split — this phase has 4 hand-written tasks to prove the
+pipeline), the L3 Docker sandbox, the five flagship agents, share loops
+(badges, run pages, head-to-head), the MCP server / Agent Finder, and the
+monetization hooks. `OwnerDashboard` and the public `Disputes` page also
+don't exist as pages yet (the API routes they'd use already do) — triggering
+an evaluation in Phase 2 is `curl`/admin-only, no UI button yet.

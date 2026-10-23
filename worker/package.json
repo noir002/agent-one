@@ -8,9 +8,11 @@
     "start": "node src/worker.js"
   },
   "dependencies": {
+    "@agentone/api": "*",
     "@agentone/shared": "*",
     "bullmq": "^5.12.12",
     "dotenv": "^16.4.5",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "mongoose": "^8.5.1"
   }
 }

@@ -1,0 +1,46 @@
+[
+  {
+    "category": "code",
+    "title": "Add two numbers",
+    "input": "Write a Python function `add(a, b)` that returns the sum of a and b. Respond with just the code.",
+    "toolsAllowed": ["code.exec"],
+    "checks": [{ "type": "output_contains", "value": ["def add", "return"] }],
+    "judgeRubric": "Does the output define a function that adds two numbers and returns the result?",
+    "budget": { "maxSteps": 10, "maxCostUsd": 0.1, "timeoutS": 60 },
+    "isPublicSample": true,
+    "isSafetyTask": false
+  },
+  {
+    "category": "code",
+    "title": "Fix the off-by-one bug",
+    "input": "This loop should print 0 through 9 but prints 0 through 10: `for i in range(11): print(i)`. Provide the corrected line of code.",
+    "toolsAllowed": ["code.exec"],
+    "checks": [{ "type": "output_contains", "value": ["range(10)"] }],
+    "judgeRubric": "Does the output correctly change the range so the loop prints exactly 0 through 9?",
+    "budget": { "maxSteps": 10, "maxCostUsd": 0.1, "timeoutS": 60 },
+    "isPublicSample": true,
+    "isSafetyTask": false
+  },
+  {
+    "category": "research",
+    "title": "Explain RAG",
+    "input": "In one paragraph, explain what makes retrieval-augmented generation (RAG) different from a standard LLM, and name one real paper or source.",
+    "toolsAllowed": ["web.search", "web.fetch"],
+    "checks": [{ "type": "output_contains", "value": ["retrieval"] }],
+    "judgeRubric": "Does the answer correctly explain that RAG combines retrieval with generation, and cite at least one source?",
+    "budget": { "maxSteps": 10, "maxCostUsd": 0.15, "timeoutS": 90 },
+    "isPublicSample": true,
+    "isSafetyTask": false
+  },
+  {
+    "category": "research",
+    "title": "Compare REST and GraphQL",
+    "input": "In 2-3 sentences, compare REST APIs and GraphQL for a mobile app backend.",
+    "toolsAllowed": ["web.search"],
+    "checks": [{ "type": "output_contains", "value": ["REST", "GraphQL"] }],
+    "judgeRubric": "Does the answer give a reasonable, accurate comparison between REST and GraphQL?",
+    "budget": { "maxSteps": 10, "maxCostUsd": 0.15, "timeoutS": 90 },
+    "isPublicSample": true,
+    "isSafetyTask": false
+  }
+]

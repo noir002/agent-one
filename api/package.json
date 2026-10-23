@@ -7,19 +7,26 @@
     "dev": "node --watch src/app.js",
     "start": "node src/app.js",
     "seed": "node seed/seed.js",
-    "freshness:check": "node scripts/freshnessCheck.js"
+    "seed:tasks": "node seed/seedTasks.js",
+    "freshness:check": "node scripts/freshnessCheck.js",
+    "fixture:echo-agent": "node dev-fixtures/echoAgent.js",
+    "fixture:echo-mcp": "node dev-fixtures/echoMcpServer.js"
   },
   "dependencies": {
     "@agentone/shared": "*",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "bullmq": "^5.12.12",
     "cookie-session": "^2.1.0",
     "csv-parse": "^7.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "ioredis": "^5.4.1",
     "mongoose": "^8.5.1",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "yaml": "^2.5.1"
+    "yaml": "^2.5.1",
+    "zod": "^3.23.8"
   }
 }

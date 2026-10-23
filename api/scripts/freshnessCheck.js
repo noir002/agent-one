@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { loadRootEnv } from "@agentone/shared/loadEnv.js";
+loadRootEnv();
 import mongoose from "mongoose";
 import { connectDB } from "../src/db.js";
 import { checkAllListings } from "../src/services/freshnessCheck.js";
