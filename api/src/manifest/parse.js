@@ -36,7 +36,11 @@ export function parseManifest(yamlText) {
 
   const iface = doc.interface || {};
   req(INTERFACE_TYPES.includes(iface.type), `\`interface.type\` must be one of: ${INTERFACE_TYPES.join(", ")}.`);
-  if (["http", "mcp", "a2a"].includes(iface.type)) {
+  if (["http", "mcp", "a2a", "docker"].includes(iface.type)) {
+    // For docker, `endpoint` doubles as the build source (a
+    // https://github.com/... URL, or file:// for local fixture testing —
+    // see dockerRunner.js's isAllowedBuildSource for the actual security
+    // gate; this is just presence validation).
     req(typeof iface.endpoint === "string" && iface.endpoint.trim(), "`interface.endpoint` is required for this interface type.");
   }
 
