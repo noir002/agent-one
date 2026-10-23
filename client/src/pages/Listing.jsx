@@ -13,6 +13,13 @@ export default function Listing({ me }) {
   const [claimResult, setClaimResult] = useState(null);
   const [claimError, setClaimError] = useState("");
   const [domainCheck, setDomainCheck] = useState(null);
+  const [tryInput, setTryInput] = useState("");
+  const [tryOutput, setTryOutput] = useState("");
+  const [tryEvents, setTryEvents] = useState([]);
+  const [tryRunning, setTryRunning] = useState(false);
+  const [tryError, setTryError] = useState("");
+  const [byokProvider, setByokProvider] = useState("");
+  const [byokKey, setByokKey] = useState("");
 
   const load = () => api.getListing(slug).then(setData).catch((err) => setError(err.message));
   useEffect(() => { load(); }, [slug]);
@@ -34,6 +41,49 @@ export default function Listing({ me }) {
     } catch (err) {
       setClaimError(err.message);
     }
+  };
+
+  const handleTryIt = async () => {
+    setTryError("");
+    setTryOutput("");
+    setTryEvents([]);
+    setTryRunning(true);
+    try {
+      const body = { input: tryInput };
+      if (byokProvider && byokKey) body.byok = { provider: byokProvider, apiKey: byokKey };
+      const res = await fetch(`/api/flagships/${slug}/try`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Request failed (${res.status})`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop();
+        for (const raw of chunks) {
+          const eventMatch = raw.match(/^event: (.+)$/m);
+          const dataMatch = raw.match(/^data: (.+)$/m);
+          if (!eventMatch || !dataMatch) continue;
+          const event = eventMatch[1];
+          const data = JSON.parse(dataMatch[1]);
+          setTryEvents((prev) => [...prev, { event, data }]);
+          if (event === "final") setTryOutput(data.output || "");
+        }
+      }
+    } catch (err) {
+      setTryError(err.message);
+    }
+    setTryRunning(false);
   };
 
   if (error) return <p className="py-16 text-center text-amber">{error}</p>;
@@ -64,6 +114,11 @@ export default function Listing({ me }) {
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <TierBadge tier={listing.tier} showCheck />
+        {listing.isFlagship && (
+          <span className="rounded-full border border-violet/40 px-2.5 py-0.5 text-xs text-violet">
+            Built by Agent One · excluded from leaderboards
+          </span>
+        )}
         {listing.openSource && <span className="glass-chip rounded-full px-2.5 py-0.5 text-xs text-ink-muted">Open-source</span>}
         <span className="glass-chip rounded-full px-2.5 py-0.5 text-xs text-ink-muted">{listing.pricing}</span>
         <span className="text-xs text-ink-muted">{freshnessLabel(listing.lastVerifiedAt)}</span>
@@ -81,6 +136,56 @@ export default function Listing({ me }) {
           </a>
         )}
       </div>
+
+      {listing.isFlagship && (
+        <section className="glass mt-8 rounded-card p-6">
+          <h2 className="font-heading text-sm font-semibold text-ink">Try it</h2>
+          <p className="mt-1 text-xs text-ink-muted">
+            5 free tries a day. Its reasoning runs on Agent One's own LLM config (mock by default —
+            see the README); paste your own key below to use your model for just this run. Never stored.
+          </p>
+          <textarea
+            value={tryInput}
+            onChange={(e) => setTryInput(e.target.value)}
+            placeholder={listing.slug === "repo-fixer" ? "Describe the bug to fix…" : "Ask a research question…"}
+            rows={3}
+            className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <select value={byokProvider} onChange={(e) => setByokProvider(e.target.value)} className="glass-chip rounded-full px-3 py-1.5 text-xs text-ink">
+              <option value="">Use Agent One's config</option>
+              <option value="gemini">My Gemini key</option>
+              <option value="groq">My Groq key</option>
+            </select>
+            {byokProvider && (
+              <input
+                type="password"
+                value={byokKey}
+                onChange={(e) => setByokKey(e.target.value)}
+                placeholder="API key (this request only)"
+                className="glass-chip flex-1 rounded-full px-3 py-1.5 text-xs text-ink focus:outline-none"
+              />
+            )}
+          </div>
+          <button
+            onClick={handleTryIt}
+            disabled={tryRunning || !tryInput.trim()}
+            className="mt-3 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50"
+          >
+            {tryRunning ? "Running…" : "Run"}
+          </button>
+          {tryError && <p className="mt-2 text-xs text-amber">{tryError}</p>}
+          {(tryEvents.length > 0 || tryOutput) && (
+            <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3 font-mono text-xs text-ink-muted">
+              {tryEvents.map((e, i) => (
+                <div key={i} className="mb-1">
+                  <span className="text-emerald">{e.event}</span>: {JSON.stringify(e.data).slice(0, 160)}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {listing.scoreParts && (
         <section className="glass mt-8 rounded-card p-6">
@@ -108,7 +213,7 @@ export default function Listing({ me }) {
         </section>
       )}
 
-      {!listing.ownerId && (
+      {!listing.ownerId && !listing.isFlagship && (
         <section className="glass mt-6 rounded-card p-6">
           <h2 className="font-heading text-sm font-semibold text-ink">Is this your agent?</h2>
           <p className="mt-1 text-xs text-ink-muted">

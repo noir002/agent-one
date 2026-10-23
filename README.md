@@ -5,12 +5,15 @@ recorded test run — not a star rating or a human glancing at a landing page.
 This replaces an earlier v1 prototype (a hub of prompt-template "agents");
 v2 is a full rewrite to a different product, stack and data model. See
 [`docs/v2 · Real-agent HLD.pdf`](docs/v2%20%C2%B7%20Real-agent%20HLD.pdf)
-for the full spec. **Through Phase 3: task suites** — 24 real tasks (12 per
-category) with a public/hidden split, safety tasks, and paraphrase rotation
-to catch agents gaming the exact wording — on top of Phase 2's eval harness
-(BullMQ orchestration, SSRF-safe runners, deterministic + LLM-judge grading,
-the 3-run/5-part scoring pipeline) and Phase 1's directory core (listings,
-the seed catalogue, directory browsing including the 3D forest, freshness
+for the full spec. **Through Phase 4: L3 sandbox and flagships** — a real
+Docker sandbox runner (network-isolated, resource-limited, auto-cleaned up)
+and two real flagship agents, Repo Fixer and Cited Researcher, hosted by
+Agent One itself and gradable through the exact same harness as any outside
+agent — on top of Phase 3's task suites (24 real tasks, public/hidden split,
+safety tasks, paraphrase rotation), Phase 2's eval harness (BullMQ
+orchestration, SSRF-safe runners, deterministic + LLM-judge grading, the
+3-run/5-part scoring pipeline), and Phase 1's directory core (listings, the
+seed catalogue, directory browsing including the 3D forest, freshness
 checks, owner claims, admin console).
 
 ## Quickstart (under 10 minutes)
@@ -31,9 +34,9 @@ checks, owner claims, admin console).
    ```bash
    npm install
    ```
-4. **Seed the catalogue and the test tasks**:
+4. **Seed the catalogue, test tasks, and flagships**:
    ```bash
-   cd api && npm run seed && npm run seed:tasks
+   cd api && npm run seed && npm run seed:tasks && npm run seed:flagships
    ```
 5. **Run it** — three processes, each in its own terminal:
    ```bash
@@ -42,9 +45,15 @@ checks, owner claims, admin console).
    cd client && npm run dev    # http://localhost:5173
    ```
    Or `docker compose up` from the repo root to run all five services
-   (mongo, redis, api, worker, client) in containers at once.
-6. Open http://localhost:5173 — the forest should show 25 real listings
-   across 5 categories immediately, no sign-in or API key required.
+   (mongo, redis, api, worker, client) in containers at once. Phase 4's L3
+   sandbox and flagship code-exec tool additionally need a Docker daemon
+   reachable from wherever the worker/api run — already true if you're
+   running mongo/redis via `docker compose`.
+6. Open http://localhost:5173 — the forest should show 27 real listings
+   (25 third-party + 2 flagships) across 5 categories immediately, no
+   sign-in or API key required. Open [Repo Fixer](http://localhost:5173/listing/repo-fixer)
+   or [Cited Researcher](http://localhost:5173/listing/cited-researcher) and
+   use "Try it" for a real (if mock-mode-limited) live run.
 
 ## Running an evaluation (Phase 2)
 
@@ -245,12 +254,47 @@ grading entirely to the judge, as intended. A second fix:
 the payload — `seedTasks.js` now uses `findOneAndReplace` so re-seeding
 always produces the full current schema shape.
 
-Not yet built (Phase 4+): the L3 Docker sandbox and execution-based code
-grading (Phase 3's code tasks have realistic fixtures — real file contents,
-a described failing test — but are graded the same way every task is,
-pattern checks + judge, not by actually running the fix against the test;
-doing that safely needs the same sandboxing care as Phase 4 itself), the
-five flagship agents, share loops, the MCP server / Agent Finder, and
-monetization. `OwnerDashboard` and the public `Disputes` page still don't
-exist as pages (the API routes do) — triggering an evaluation is
-`curl`/admin-only, no UI button yet.
+## What's built in Phase 4
+
+- **L3 Docker sandbox** (`api/src/harness/codeSandbox.js` +
+  `runners/dockerRunner.js`): `--network none`, hard memory/CPU/pids limits,
+  a real wall-clock timeout that force-kills the container, guaranteed
+  cleanup. **Directly verified, not assumed**: a network-reaching command
+  inside the sandbox fails at DNS resolution (no interface to even query);
+  a hung container is killed at exactly its timeout and leaves zero trace
+  in `docker ps -a` afterward. Ran a full 27-run eval through it against a
+  local test fixture — same event/output shape as http/mcp, gradable by the
+  unmodified `deterministic.js`/`judge.js`.
+- **Scope cut, same honesty as every phase**: onboarding any real
+  open-source agent (Aider, SWE-agent, etc.) through the docker runner is
+  deferred — each has its own bespoke CLI contract to translate, a per-agent
+  integration effort on the scale of a task suite. The generic sandbox
+  mechanism is proven against a fixture; breadth is the flagged next step.
+- **Two real flagship agents**, `api/src/flagships/`, hosted on Agent One's
+  own api service and graded through the *exact same* http runner as any
+  outside agent (ran a full eval against Repo Fixer directly — no
+  special-cased harness path):
+  - **Repo Fixer**: checks a candidate fix's syntax for real inside the
+    sandbox (the same primitive as the L3 runner), asks the LLM adapter for
+    a fix, retries up to 5 times. In mock mode it honestly declines to
+    overwrite working code with mock's generic text, rather than faking a
+    "smart" result — verified directly via the raw SSE stream.
+  - **Cited Researcher**: real tools today, no paid key needed — search via
+    DuckDuckGo's free Instant Answer API, page fetch via `safeFetch`. Only
+    ever cites a URL it actually fetched successfully. **Found and fixed a
+    real bug while testing it**: Wikipedia returned 403 without an
+    identifying `User-Agent` header — `safeFetch` now sends one by default.
+  - Both get `isFlagship: true` listings; `GET /api/listings?sort=score`
+    now excludes them — confirmed Repo Fixer still doesn't appear there
+    even after a real eval run gave it a real score (51.1).
+- **"Try it" UI** on both listing pages: a live SSE-streamed run box with a
+  5-per-day visitor cap (confirmed blocking the 6th try) and an optional
+  bring-your-own-key field for that one request only. Required extending
+  `generate()` to accept a per-call provider/key override instead of
+  mutating `process.env` — the global-mutation approach would race across
+  concurrent visitors using different keys.
+
+Not yet built (Phase 5+): onboarding real open-source agents through the
+docker runner (see above), share loops (badges, run pages, head-to-head),
+the MCP server / Agent Finder, and monetization. `OwnerDashboard` and the
+public `Disputes` page still don't exist as pages (the API routes do).
