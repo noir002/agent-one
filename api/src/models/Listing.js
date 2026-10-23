@@ -45,6 +45,20 @@ const listingSchema = new mongoose.Schema({
   // Where the listing's facts came from (for the "never copy another
   // directory" rule) — the agent's own site/repo, recorded for audit.
   factSource: { type: String, default: "" },
+
+  // Set by the weekly spot-check script (api/scripts/spotCheck.js) when a
+  // random re-test's score differs a lot from the listing's prior snapshot
+  // — a possible sign of gaming or an unstable agent. Cleared by an admin
+  // once reviewed (see routes/admin.js).
+  scoreGapFlag: {
+    type: new mongoose.Schema({
+      at: Date,
+      previousScore: Number,
+      newScore: Number,
+      gap: Number,
+    }, { _id: false }),
+    default: null,
+  },
 }, { timestamps: true });
 
 listingSchema.index({ category: 1 });

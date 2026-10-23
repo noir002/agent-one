@@ -8,6 +8,8 @@ import Compare from "./pages/Compare.jsx";
 import Submit from "./pages/Submit.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
+import OwnerDashboard from "./pages/OwnerDashboard.jsx";
+import Leaderboard from "./pages/Leaderboard.jsx";
 import HowWeMakeMoney from "./pages/HowWeMakeMoney.jsx";
 import { api } from "./lib/api.js";
 
@@ -41,8 +43,10 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/listing/:slug" element={<Listing me={me} />} />
           <Route path="/compare" element={<Compare />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/submit" element={<Submit me={me} />} />
           <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
+          <Route path="/owner" element={<OwnerDashboard me={me} />} />
           <Route path="/admin" element={<Admin me={me} />} />
           <Route path="/how-we-make-money" element={<HowWeMakeMoney />} />
         </Routes>

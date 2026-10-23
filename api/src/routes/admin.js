@@ -93,7 +93,11 @@ router.post("/listings/:id/recheck-freshness", async (req, res) => {
 
 router.get("/disputes", async (_req, res) => {
   const disputes = await Dispute.find().populate("listingId", "slug name").sort({ createdAt: -1 }).lean();
-  res.json({ disputes });
+  const now = Date.now();
+  res.json({
+    disputes: disputes.map((d) => ({ ...d, overdue: d.status === "open" && new Date(d.dueAt).getTime() < now }))
+      .sort((a, b) => (b.overdue - a.overdue) || (new Date(b.createdAt) - new Date(a.createdAt))),
+  });
 });
 
 router.post("/disputes/:id/resolve", async (req, res) => {
@@ -107,6 +111,23 @@ router.post("/disputes/:id/resolve", async (req, res) => {
   }, { new: true });
   if (!dispute) return res.status(404).json({ error: "Dispute not found." });
   res.json({ dispute });
+});
+
+// Listings the weekly spot-check (api/scripts/spotCheck.js) flagged for a
+// large score swing between re-tests — a possible sign of gaming or an
+// unstable agent, surfaced for manual review.
+router.get("/score-gap-flags", async (_req, res) => {
+  const listings = await Listing.find({ scoreGapFlag: { $ne: null } })
+    .select("slug name scoreGapFlag")
+    .sort({ "scoreGapFlag.at": -1 })
+    .lean();
+  res.json({ listings });
+});
+
+router.post("/listings/:id/clear-score-gap-flag", async (req, res) => {
+  const listing = await Listing.findByIdAndUpdate(req.params.id, { scoreGapFlag: null }, { new: true });
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  res.json({ listing });
 });
 
 router.get("/tasks", async (_req, res) => {

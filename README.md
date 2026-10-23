@@ -294,6 +294,63 @@ always produces the full current schema shape.
   mutating `process.env` — the global-mutation approach would race across
   concurrent visitors using different keys.
 
+## What's built in Phase 5
+
+Trust and owner tools — five features, all verified end-to-end against a
+real owner/visitor flow (claimed a listing, connected a manifest to the
+`echoAgent.js` fixture, ran a real `EvalRun` through it, then drove every
+piece of UI in the browser), not just unit-level API calls.
+
+- **Run-backed reviews, closing the real gap this phase targeted**: 25 of
+  27 seed listings could never be reviewed before this — `Review.runId`
+  required a `TaskRun`, which only a full owner/admin-triggered benchmark
+  produces. New `QuickRun` model + `POST /listings/:slug/quick-run`
+  generalizes the Phase 4 flagship "Try it" pattern to any `http`/`mcp`
+  listing, dispatched through the *same* `getRunner()` the harness uses —
+  no new runner code. Signed-in, capped at 10/day. **Found and fixed a real
+  bug while building it**: the route initially passed `manifest.permissions`
+  (owner-declared, snake_case `max_steps`/`timeout_s`) straight through as
+  `task.budget` — but the runners read camelCase `maxSteps`/`timeoutS` (see
+  `Task.js`), so the owner's declared budget was silently ignored in favor
+  of hardcoded fallbacks. Fixed before it ever ran, by mapping the fields
+  explicitly (`api/src/routes/reviews.js`).
+- **Owner dashboard** (`/owner`): manifest connect/update, "request
+  re-test," recent-run history with failed `TaskRun`s surfaced inline, and
+  "file a dispute" right from a failed trace. Verified as a real non-admin
+  owner (claimed via the existing DNS-claim flow, domain check bypassed
+  only as a test-setup step since we don't control the seeded listing's
+  real domain — the app code itself has no bypass).
+- **Dispute filing**, now real end-to-end: `POST /api/disputes` (owner/admin
+  only — confirmed a non-owner gets a 403), `dueAt` = filed + 7 days, admin
+  console sorts overdue first, resolve action wired to a UI for the first
+  time (the API existed since Phase 1, never had one). Confirmed resolved
+  disputes appear on the public `GET /api/disputes` with their resolution
+  text.
+- **Score history + leaderboard**: every `EvalRun` has written a
+  `ScoreSnapshot` since Phase 2; nothing read them back until now. Ran two
+  evals against a test listing and confirmed the history returns both in
+  order. `/leaderboard` reuses `GET /api/listings?sort=score` (already
+  flagship-excluded since Phase 4) filtered to `score != null`; confirmed
+  category filtering excludes a code-category listing when filtered to
+  research.
+- **Weekly spot-check script** (`api/scripts/spotCheck.js`, `npm run
+  spotcheck`): samples ~10% of L2/L3 listings, re-queues an `EvalRun` for
+  each, flags `Listing.scoreGapFlag` when the new score differs from the
+  prior one by 20+ points. Ran it twice against a live listing: once with
+  no prior score drift (correctly logged "ok," no flag) and once after
+  seeding an artificially divergent prior score (correctly flagged a 44.4
+  point gap) — then cleared the flag through the new admin endpoint.
+
+**Scope cuts, same honesty as every phase:**
+- QuickRun is `http`/`mcp` only — a `docker` quick-run would mean building
+  an owner-submitted image on demand for any signed-in visitor's click,
+  real cost and abuse surface this phase doesn't take on.
+- "Admin review within 7 days" is a process commitment `dueAt` tracks, not
+  something code enforces — there's no automatic escalation or lockout.
+- `scoreGapFlag` lives on the `Listing` itself and surfaces in the existing
+  admin console, rather than a dedicated review-queue UI — same shape as
+  the admin tooling added in Phases 1-3.
+
 Not yet built (Phase 5+): onboarding real open-source agents through the
 docker runner (see above), share loops (badges, run pages, head-to-head),
 the MCP server / Agent Finder, and monetization. `OwnerDashboard` and the

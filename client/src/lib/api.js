@@ -45,6 +45,22 @@ export const api = {
   getDisputes: () => request("/disputes"),
   getStats: () => request("/stats"),
   getPublicTasks: (category) => request(`/tasks${category ? `?category=${category}` : ""}`),
+  fileDispute: (payload) => request("/disputes", { method: "POST", body: JSON.stringify(payload) }),
+
+  // Owner dashboard
+  connectManifest: (slug, yaml) => request(`/listings/${slug}/manifest`, { method: "POST", body: JSON.stringify({ yaml }) }),
+  requestEvaluation: (slug) => request(`/listings/${slug}/evaluate`, { method: "POST" }),
+  getEvalRuns: (slug) => request(`/listings/${slug}/eval-runs`),
+  getScoreHistory: (slug) => request(`/listings/${slug}/score-history`),
+
+  // Run-backed reviews
+  quickRun: (slug, input) => request(`/listings/${slug}/quick-run`, { method: "POST", body: JSON.stringify({ input }) }),
+  submitReview: (slug, payload) => request(`/listings/${slug}/review`, { method: "POST", body: JSON.stringify(payload) }),
+  getReviews: (slug) => request(`/listings/${slug}/reviews`),
+
+  // Admin: score-gap flags
+  getScoreGapFlags: () => request("/admin/score-gap-flags"),
+  clearScoreGapFlag: (id) => request(`/admin/listings/${id}/clear-score-gap-flag`, { method: "POST" }),
 
   // Auth
   me: () => request("/me"),

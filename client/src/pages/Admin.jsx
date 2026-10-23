@@ -50,6 +50,93 @@ function ClaimsQueue() {
   );
 }
 
+function DisputesQueue() {
+  const [disputes, setDisputes] = useState([]);
+  const [error, setError] = useState("");
+  const [resolution, setResolution] = useState({});
+
+  const load = () => api.getAdminDisputes().then((d) => setDisputes(d.disputes)).catch((err) => setError(err.message));
+  useEffect(() => { load(); }, []);
+
+  const resolve = async (id) => {
+    await api.resolveDispute(id, resolution[id] || "");
+    setResolution((prev) => ({ ...prev, [id]: "" }));
+    load();
+  };
+
+  const open = disputes.filter((d) => d.status === "open");
+
+  return (
+    <section>
+      <h2 className="font-heading text-lg font-semibold text-ink">Disputes</h2>
+      {error && <p className="mt-2 text-xs text-amber">{error}</p>}
+      <div className="mt-3 space-y-2">
+        {open.map((d) => (
+          <div key={d._id} className={`glass rounded-card p-4 ${d.overdue ? "border border-amber/50" : ""}`}>
+            <div className="flex items-center justify-between">
+              <Link to={`/listing/${d.listingId?.slug}`} className="font-heading text-sm text-ink hover:text-emerald">
+                {d.listingId?.name}
+              </Link>
+              {d.overdue && <span className="text-xs text-amber">overdue (due {new Date(d.dueAt).toLocaleDateString()})</span>}
+            </div>
+            <p className="mt-1 text-xs text-ink-muted">{d.reason}</p>
+            <div className="mt-2 flex gap-2">
+              <input
+                value={resolution[d._id] || ""}
+                onChange={(e) => setResolution((prev) => ({ ...prev, [d._id]: e.target.value }))}
+                placeholder="Resolution note"
+                className="glass-chip flex-1 rounded-full px-3 py-1.5 text-xs text-ink focus:outline-none"
+              />
+              <button
+                onClick={() => resolve(d._id)}
+                disabled={!resolution[d._id]?.trim()}
+                className="rounded-full bg-emerald px-3 py-1.5 text-xs font-medium text-bg disabled:opacity-30"
+              >
+                Resolve
+              </button>
+            </div>
+          </div>
+        ))}
+        {open.length === 0 && !error && <p className="text-sm text-ink-muted">No open disputes.</p>}
+      </div>
+    </section>
+  );
+}
+
+function ScoreGapFlags() {
+  const [listings, setListings] = useState([]);
+  const [error, setError] = useState("");
+
+  const load = () => api.getScoreGapFlags().then((d) => setListings(d.listings)).catch((err) => setError(err.message));
+  useEffect(() => { load(); }, []);
+
+  const clear = async (id) => { await api.clearScoreGapFlag(id); load(); };
+
+  return (
+    <section className="mt-10">
+      <h2 className="font-heading text-lg font-semibold text-ink">Score gap flags</h2>
+      <p className="mt-1 text-xs text-ink-muted">Listings the weekly spot-check flagged for a large score swing between re-tests.</p>
+      {error && <p className="mt-2 text-xs text-amber">{error}</p>}
+      <div className="mt-3 space-y-2">
+        {listings.map((l) => (
+          <div key={l._id} className="glass flex items-center justify-between rounded-card p-4">
+            <div>
+              <Link to={`/listing/${l.slug}`} className="font-heading text-sm text-ink hover:text-emerald">{l.name}</Link>
+              <p className="text-xs text-amber">
+                {Math.round(l.scoreGapFlag.previousScore)} → {Math.round(l.scoreGapFlag.newScore)} (gap {l.scoreGapFlag.gap.toFixed(1)}) on {new Date(l.scoreGapFlag.at).toLocaleDateString()}
+              </p>
+            </div>
+            <button onClick={() => clear(l._id)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">
+              Clear flag
+            </button>
+          </div>
+        ))}
+        {listings.length === 0 && !error && <p className="text-sm text-ink-muted">No flagged listings.</p>}
+      </div>
+    </section>
+  );
+}
+
 function ListingTools() {
   const [slug, setSlug] = useState("");
   const [id, setId] = useState("");
@@ -171,7 +258,9 @@ export default function Admin({ me }) {
       <h1 className="font-heading text-2xl font-semibold text-ink">Admin console</h1>
       <div className="mt-6 space-y-10">
         <ClaimsQueue />
+        <DisputesQueue />
         <ListingTools />
+        <ScoreGapFlags />
         <TasksPanel />
       </div>
     </div>

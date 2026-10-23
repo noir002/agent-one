@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 
-// Run-backed reviews: the HLD requires every review to link to a real run
-// the reviewer triggered through Agent One. runId stays optional until
-// Phase 2 produces runs to link to; the review route will start requiring
-// it once TaskRun exists, and this schema/index are ready for that.
+// Run-backed reviews: now enforced for real (Phase 5) — a review must link
+// to a QuickRun the reviewer actually triggered against this listing
+// through Agent One (see routes/listings.js's quick-run + review routes).
 const reviewSchema = new mongoose.Schema({
   listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing", required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  runId: { type: mongoose.Schema.Types.ObjectId, default: null }, // Phase 2: ref "TaskRun", required
+  runId: { type: mongoose.Schema.Types.ObjectId, ref: "QuickRun", required: true },
   stars: { type: Number, min: 1, max: 5, required: true },
   text: { type: String, default: "" },
 }, { timestamps: { createdAt: "createdAt", updatedAt: false } });

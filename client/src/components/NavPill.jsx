@@ -11,11 +11,15 @@ export default function NavPill({ me, onLogout }) {
         <div className="hidden items-center gap-5 text-sm text-ink-muted md:flex">
           <Link to="/" className="hover:text-ink">Explore</Link>
           <Link to="/compare" className="hover:text-ink">Compare</Link>
+          <Link to="/leaderboard" className="hover:text-ink">Leaderboard</Link>
           <Link to="/submit" className="hover:text-ink">Submit</Link>
         </div>
         <div className="flex items-center gap-3">
           {me?.user ? (
             <>
+              {(me.user.role === "owner" || me.user.role === "admin") && (
+                <Link to="/owner" className="hidden text-xs text-emerald hover:underline sm:inline">Owner</Link>
+              )}
               {me.user.role === "admin" && (
                 <Link to="/admin" className="hidden text-xs text-violet hover:underline sm:inline">Admin</Link>
               )}

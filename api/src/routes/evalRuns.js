@@ -5,6 +5,7 @@ import EvalRun from "../models/EvalRun.js";
 import TaskRun from "../models/TaskRun.js";
 import { enqueueEvalRun } from "../queue/evalQueue.js";
 import { parseManifest, ManifestError } from "../manifest/parse.js";
+import ScoreSnapshot from "../models/ScoreSnapshot.js";
 
 const router = Router();
 
@@ -92,6 +93,43 @@ router.post("/listings/:slug/evaluate", async (req, res) => {
   await enqueueEvalRun(evalRun._id);
 
   res.status(202).json({ evalRun });
+});
+
+// Recent run history for the owner dashboard — status, score-relevant
+// outcomes, and a quick view of which task runs failed (for "file a
+// dispute from a failed trace").
+router.get("/listings/:slug/eval-runs", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug }).select("_id").lean();
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+
+  const evalRuns = await EvalRun.find({ listingId: listing._id }).sort({ createdAt: -1 }).limit(10).lean();
+  const evalRunIds = evalRuns.map((e) => e._id);
+  const failedTaskRuns = await TaskRun.find({ evalRunId: { $in: evalRunIds }, outcome: { $ne: "pass" } })
+    .select("evalRunId taskId runIndex outcome errorMessage finalOutput")
+    .lean();
+
+  const failedByEvalRun = {};
+  for (const tr of failedTaskRuns) {
+    const key = tr.evalRunId.toString();
+    (failedByEvalRun[key] ||= []).push(tr);
+  }
+
+  res.json({
+    evalRuns: evalRuns.map((e) => ({ ...e, failedTaskRuns: failedByEvalRun[e._id.toString()] || [] })),
+  });
+});
+
+// Every EvalRun writes a ScoreSnapshot (api/src/harness/runEvalRun.js) —
+// this is the first time anything reads them back, to feed the listing
+// page's score history chart.
+router.get("/listings/:slug/score-history", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug }).select("_id").lean();
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  const history = await ScoreSnapshot.find({ listingId: listing._id })
+    .sort({ computedAt: 1 })
+    .select("score parts manifestVersion computedAt")
+    .lean();
+  res.json({ history });
 });
 
 router.get("/eval-runs/:id", async (req, res) => {

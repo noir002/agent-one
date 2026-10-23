@@ -1,18 +1,21 @@
 import mongoose from "mongoose";
 
-// Owners file disputes against a failed trace/score. The trigger for that
-// ("file a dispute from a failed trace") arrives with Phase 2's eval runs —
-// this schema and the public disputes list exist now so the review flow is
-// ready to wire up.
+const DISPUTE_REVIEW_DAYS = 7;
+
+// Owners file disputes against a failed trace/score, now that TaskRun
+// exists to link to (Phase 2+). "Admin review within 7 days" is a process
+// commitment the HLD makes, not something code can enforce — dueAt exists
+// so the admin console can surface overdue ones, as a tracking aid.
 const disputeSchema = new mongoose.Schema({
   listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing", required: true },
   filedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  relatedRunId: { type: mongoose.Schema.Types.ObjectId, default: null }, // Phase 2: ref "TaskRun"
+  relatedRunId: { type: mongoose.Schema.Types.ObjectId, ref: "TaskRun", default: null },
   reason: { type: String, required: true },
   status: { type: String, enum: ["open", "resolved"], default: "open" },
   resolution: { type: String, default: "" },
   resolvedAt: { type: Date, default: null },
   resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  dueAt: { type: Date, default: () => new Date(Date.now() + DISPUTE_REVIEW_DAYS * 24 * 60 * 60 * 1000) },
 }, { timestamps: true });
 
 disputeSchema.index({ status: 1 });

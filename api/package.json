@@ -10,6 +10,7 @@
     "seed:tasks": "node seed/seedTasks.js",
     "seed:flagships": "node seed/seedFlagships.js",
     "freshness:check": "node scripts/freshnessCheck.js",
+    "spotcheck": "node scripts/spotCheck.js",
     "fixture:echo-agent": "node dev-fixtures/echoAgent.js",
     "fixture:echo-mcp": "node dev-fixtures/echoMcpServer.js"
   },

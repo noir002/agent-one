@@ -20,9 +20,23 @@ export default function Listing({ me }) {
   const [tryError, setTryError] = useState("");
   const [byokProvider, setByokProvider] = useState("");
   const [byokKey, setByokKey] = useState("");
+  const [quickRunInput, setQuickRunInput] = useState("");
+  const [quickRun, setQuickRun] = useState(null);
+  const [quickRunError, setQuickRunError] = useState("");
+  const [quickRunLoading, setQuickRunLoading] = useState(false);
+  const [reviewStars, setReviewStars] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [scoreHistory, setScoreHistory] = useState([]);
 
   const load = () => api.getListing(slug).then(setData).catch((err) => setError(err.message));
   useEffect(() => { load(); }, [slug]);
+  useEffect(() => {
+    api.getReviews(slug).then((d) => setReviews(d.reviews)).catch(() => {});
+    api.getScoreHistory(slug).then((d) => setScoreHistory(d.history)).catch(() => {});
+  }, [slug]);
 
   const handleClaim = async () => {
     setClaimError("");
@@ -86,10 +100,35 @@ export default function Listing({ me }) {
     setTryRunning(false);
   };
 
+  const handleQuickRun = async () => {
+    setQuickRunError("");
+    setReviewSubmitted(false);
+    setQuickRunLoading(true);
+    try {
+      const result = await api.quickRun(slug, quickRunInput);
+      setQuickRun(result.quickRun);
+    } catch (err) {
+      setQuickRunError(err.message);
+    }
+    setQuickRunLoading(false);
+  };
+
+  const handleSubmitReview = async () => {
+    setReviewError("");
+    try {
+      await api.submitReview(slug, { quickRunId: quickRun._id, stars: reviewStars, text: reviewText });
+      setReviewSubmitted(true);
+      api.getReviews(slug).then((d) => setReviews(d.reviews)).catch(() => {});
+    } catch (err) {
+      setReviewError(err.message);
+    }
+  };
+
   if (error) return <p className="py-16 text-center text-amber">{error}</p>;
   if (!data) return <p className="py-16 text-center text-ink-muted">Loading…</p>;
 
   const { listing, manifest } = data;
+  const canQuickRun = !listing.isFlagship && listing.manifestId && ["http", "mcp"].includes(listing.interfaceType);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -195,6 +234,105 @@ export default function Listing({ me }) {
               <div key={k}>
                 <div className="text-ink">{Math.round(v * 100)}%</div>
                 <div className="capitalize">{k}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {scoreHistory.length > 1 && (
+        <section className="glass mt-8 rounded-card p-6">
+          <h2 className="font-heading text-sm font-semibold text-ink">Score history</h2>
+          <div className="mt-4 flex h-20 items-end gap-1.5">
+            {scoreHistory.map((snap, i) => (
+              <div
+                key={i}
+                title={`${Math.round(snap.score)} on ${new Date(snap.computedAt).toLocaleDateString()}`}
+                className="flex-1 rounded-t bg-violet/50"
+                style={{ height: `${Math.max(4, snap.score)}%` }}
+              />
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-ink-muted">
+            {Math.round(scoreHistory[0].score)} → {Math.round(scoreHistory[scoreHistory.length - 1].score)} across {scoreHistory.length} runs
+          </p>
+        </section>
+      )}
+
+      {canQuickRun && (
+        <section className="glass mt-8 rounded-card p-6">
+          <h2 className="font-heading text-sm font-semibold text-ink">Run it, then review</h2>
+          <p className="mt-1 text-xs text-ink-muted">
+            This triggers a real, one-off run against the connected agent — not part of its benchmark score.
+            Sign in required; up to 10 runs a day.
+          </p>
+          {!me?.user ? (
+            <Link to="/login" className="mt-3 inline-block text-sm text-emerald hover:underline">Sign in to run it</Link>
+          ) : (
+            <>
+              <textarea
+                value={quickRunInput}
+                onChange={(e) => setQuickRunInput(e.target.value)}
+                placeholder="Give it something to do…"
+                rows={3}
+                className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+              />
+              <button
+                onClick={handleQuickRun}
+                disabled={quickRunLoading || !quickRunInput.trim()}
+                className="mt-3 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50"
+              >
+                {quickRunLoading ? "Running…" : "Run"}
+              </button>
+              {quickRunError && <p className="mt-2 text-xs text-amber">{quickRunError}</p>}
+              {quickRun && (
+                <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3 text-xs">
+                  <p className={quickRun.status === "error" ? "text-amber" : "text-ink-muted"}>
+                    {quickRun.status === "error" ? quickRun.errorMessage || "The run failed." : quickRun.output}
+                  </p>
+                </div>
+              )}
+              {quickRun && !reviewSubmitted && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setReviewStars(n)}
+                        className={`text-lg ${n <= reviewStars ? "text-amber" : "text-ink-muted"}`}
+                      >★</button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="What did you think? (optional)"
+                    rows={2}
+                    className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+                  />
+                  <button onClick={handleSubmitReview} className="mt-2 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90">
+                    Submit review
+                  </button>
+                  {reviewError && <p className="mt-2 text-xs text-amber">{reviewError}</p>}
+                </div>
+              )}
+              {reviewSubmitted && <p className="mt-3 text-xs text-emerald">Review posted — thanks.</p>}
+            </>
+          )}
+        </section>
+      )}
+
+      {reviews.length > 0 && (
+        <section className="glass mt-6 rounded-card p-6">
+          <h2 className="font-heading text-sm font-semibold text-ink">Reviews</h2>
+          <div className="mt-3 space-y-3">
+            {reviews.map((r) => (
+              <div key={r._id} className="border-t border-white/10 pt-3 first:border-0 first:pt-0">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-amber">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
+                  <span className="text-ink-muted">{r.userId?.name || "Anonymous"}</span>
+                </div>
+                {r.text && <p className="mt-1 text-xs text-ink-muted">{r.text}</p>}
               </div>
             ))}
           </div>
