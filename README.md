@@ -5,11 +5,13 @@ recorded test run — not a star rating or a human glancing at a landing page.
 This replaces an earlier v1 prototype (a hub of prompt-template "agents");
 v2 is a full rewrite to a different product, stack and data model. See
 [`docs/v2 · Real-agent HLD.pdf`](docs/v2%20%C2%B7%20Real-agent%20HLD.pdf)
-for the full spec. **Through Phase 2: the eval harness** — BullMQ job
-orchestration, SSRF-safe runners (`http` and `mcp`), deterministic + LLM-judge
-grading, and the real 3-run/5-part scoring pipeline — on top of Phase 1's
-directory core (listings, the seed catalogue, directory browsing including
-the 3D forest, freshness checks, owner claims, admin console).
+for the full spec. **Through Phase 3: task suites** — 24 real tasks (12 per
+category) with a public/hidden split, safety tasks, and paraphrase rotation
+to catch agents gaming the exact wording — on top of Phase 2's eval harness
+(BullMQ orchestration, SSRF-safe runners, deterministic + LLM-judge grading,
+the 3-run/5-part scoring pipeline) and Phase 1's directory core (listings,
+the seed catalogue, directory browsing including the 3D forest, freshness
+checks, owner claims, admin console).
 
 ## Quickstart (under 10 minutes)
 
@@ -69,7 +71,10 @@ curl -X POST http://localhost:4000/api/listings/aider/manifest \
 Submitting a manifest with a new version auto-queues an `EvalRun`; so does
 `POST /api/listings/:slug/evaluate`. Watch the worker's logs for
 `eval run ... done — score N`, then `GET /api/listings/aider` to see the
-tier promoted to L2 and `score`/`scoreParts` populated.
+tier promoted to L2 and `score`/`scoreParts` populated. As of Phase 3, this
+runs exactly the 9 hidden tasks for that category (6 regular + 3 safety) ×
+3 runs each — the 3 public samples are never scored, only shown via
+`GET /api/tasks`.
 
 **Local-dev-only note**: the harness's SSRF protection blocks loopback
 addresses by default (same as private ranges and cloud metadata) — the
@@ -197,10 +202,55 @@ hypothetical — each one broke a real run until fixed):
    conflated every client's session into one, corrupting the others. Fixed
    with the SDK's documented per-session-transport pattern.
 
-Not yet built (Phase 3+): the full 30-task suite (15/15, safety tasks,
-hidden/paraphrase split — this phase has 4 hand-written tasks to prove the
-pipeline), the L3 Docker sandbox, the five flagship agents, share loops
-(badges, run pages, head-to-head), the MCP server / Agent Finder, and the
-monetization hooks. `OwnerDashboard` and the public `Disputes` page also
-don't exist as pages yet (the API routes they'd use already do) — triggering
-an evaluation in Phase 2 is `curl`/admin-only, no UI button yet.
+## What's built in Phase 3
+
+- **24 real tasks** (`api/seed/tasks.json`, 12 per category): 3 public
+  samples, 6 hidden tasks each with a genuinely different-wording paraphrase,
+  3 safety tasks (prompt injection, data leak, unsafe request) — the HLD's
+  full 15+15+6 catalogue is a much larger content-authoring effort,
+  deliberately scoped down the same way the 25-listing catalogue was.
+- **A real scoring-rule fix, not just new content**: Phase 2's harness
+  scored every task it found, with no public/hidden distinction (all 4
+  placeholder tasks happened to be public, so it never mattered). The HLD is
+  explicit — *"score only on hidden tasks"* — so `executeEvalRun` now
+  queries `isPublicSample: false` only. Verified: an eval run executes
+  exactly 9 tasks per category (6 regular + 3 safety), not 12.
+- Inline paraphrase support on `Task` (`paraphrase: {input, fixtures}`,
+  `activeVariant`) and `api/src/harness/taskVariant.js`, which every runner
+  reads task content through — confirmed returning the paraphrased wording
+  when active, by direct test.
+- `POST /api/admin/tasks/rotate`: picks a random third of the regular hidden
+  tasks per category (safety tasks and public samples excluded) and flips
+  their active variant — confirmed rotating exactly 2 of 6 per category, both
+  via the API and the new Admin console "Task suites" panel.
+- `GET /api/tasks`: public sample tasks only, for an owner to see the format
+  without ever exposing hidden tasks or their answer-key checks.
+- **The safety checks were verified rigorously, not just run once**: the
+  http test fixture got two deliberately-bad canned responses (one that
+  complies with an embedded prompt injection, one that leaks a planted fake
+  secret) specifically so the safety checks had something real to catch —
+  confirmed both `output_not_contains` checks correctly failed those runs
+  (not just trivially passing on a generic non-answer), and the resulting
+  score dropped accordingly (66.7 → 45.6) when safety started failing.
+
+**One more real bug found and fixed**: `runDeterministicChecks` required
+`results.length > 0` to ever pass, which meant any judge-only task (like
+the "refuse an unsafe request" safety tasks, which intentionally have zero
+mechanical checks) auto-failed regardless of the judge's verdict. Fixed so a
+task with no deterministic checks trivially passes that stage and leaves
+grading entirely to the judge, as intended. A second fix:
+`findOneAndUpdate` with `$set` on re-seeding silently left old documents
+(the 4 tasks reused by title from Phase 2) missing the new `activeVariant`/
+`paraphrase` fields entirely, since `$set` only touches fields present in
+the payload — `seedTasks.js` now uses `findOneAndReplace` so re-seeding
+always produces the full current schema shape.
+
+Not yet built (Phase 4+): the L3 Docker sandbox and execution-based code
+grading (Phase 3's code tasks have realistic fixtures — real file contents,
+a described failing test — but are graded the same way every task is,
+pattern checks + judge, not by actually running the fix against the test;
+doing that safely needs the same sandboxing care as Phase 4 itself), the
+five flagship agents, share loops, the MCP server / Agent Finder, and
+monetization. `OwnerDashboard` and the public `Disputes` page still don't
+exist as pages (the API routes do) — triggering an evaluation is
+`curl`/admin-only, no UI button yet.

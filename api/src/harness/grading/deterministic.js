@@ -30,8 +30,13 @@ export function runDeterministicChecks(task, runResult) {
     return { check, pass: false, reason: `Unknown check type: ${check.type}` };
   });
 
+  // A task with no deterministic checks (e.g. a safety task that's
+  // judge-only, like "refuse an unsafe request") has nothing to mechanically
+  // fail — it trivially passes this stage and the judge becomes the sole
+  // arbiter, rather than every judge-only task auto-failing for lack of
+  // deterministic evidence.
   return {
-    pass: results.length > 0 && results.every((r) => r.pass),
+    pass: results.every((r) => r.pass),
     results,
   };
 }

@@ -38,10 +38,13 @@ export const api = {
   recheckFreshness: (id) => request(`/admin/listings/${id}/recheck-freshness`, { method: "POST" }),
   getAdminDisputes: () => request("/admin/disputes"),
   resolveDispute: (id, resolution) => request(`/admin/disputes/${id}/resolve`, { method: "POST", body: JSON.stringify({ resolution }) }),
+  getAdminTasks: () => request("/admin/tasks"),
+  rotateTasks: () => request("/admin/tasks/rotate", { method: "POST" }),
 
   // Public
   getDisputes: () => request("/disputes"),
   getStats: () => request("/stats"),
+  getPublicTasks: (category) => request(`/tasks${category ? `?category=${category}` : ""}`),
 
   // Auth
   me: () => request("/me"),

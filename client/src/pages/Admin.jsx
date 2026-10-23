@@ -98,6 +98,70 @@ function ListingTools() {
   );
 }
 
+function TasksPanel() {
+  const [tasks, setTasks] = useState([]);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const load = () => api.getAdminTasks().then((d) => setTasks(d.tasks)).catch((err) => setError(err.message));
+  useEffect(() => { load(); }, []);
+
+  const rotate = async () => {
+    try {
+      const { rotated } = await api.rotateTasks();
+      setMessage(rotated.length ? `Rotated: ${rotated.map((r) => `${r.title} → ${r.activeVariant}`).join(", ")}` : "Nothing eligible to rotate.");
+      load();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const byCategory = tasks.reduce((acc, t) => {
+    (acc[t.category] ||= []).push(t);
+    return acc;
+  }, {});
+
+  return (
+    <section className="mt-10">
+      <div className="flex items-center justify-between">
+        <h2 className="font-heading text-lg font-semibold text-ink">Task suites</h2>
+        <button onClick={rotate} className="rounded-full bg-emerald px-3 py-1.5 text-xs font-medium text-bg hover:opacity-90">
+          Rotate a third of hidden tasks
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-amber">{error}</p>}
+      {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
+      {Object.entries(byCategory).map(([category, catTasks]) => (
+        <div key={category} className="glass mt-3 rounded-card p-4">
+          <h3 className="font-heading text-sm font-semibold capitalize text-ink">{category}</h3>
+          <table className="mt-2 w-full text-left text-xs">
+            <thead>
+              <tr className="text-ink-muted">
+                <th className="py-1 pr-2">Title</th>
+                <th className="py-1 pr-2">Visibility</th>
+                <th className="py-1 pr-2">Active variant</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catTasks.map((t) => (
+                <tr key={t._id} className="border-t border-white/10 text-ink">
+                  <td className="py-1.5 pr-2">{t.title}</td>
+                  <td className="py-1.5 pr-2 text-ink-muted">
+                    {t.isPublicSample ? "public" : t.isSafetyTask ? "safety" : "hidden"}
+                  </td>
+                  <td className="py-1.5 pr-2 font-mono text-ink-muted">
+                    {t.hasParaphrase ? t.activeVariant : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function Admin({ me }) {
   if (!me?.user) return <p className="py-16 text-center text-sm text-ink-muted">Sign in as an admin to view this page.</p>;
   if (me.user.role !== "admin") return <p className="py-16 text-center text-sm text-amber">Admin access required.</p>;
@@ -108,6 +172,7 @@ export default function Admin({ me }) {
       <div className="mt-6 space-y-10">
         <ClaimsQueue />
         <ListingTools />
+        <TasksPanel />
       </div>
     </div>
   );

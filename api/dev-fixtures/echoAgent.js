@@ -15,6 +15,13 @@ const CANNED_ANSWERS = [
   { match: /off-by-one/i, output: "Change `range(11)` to `range(10)`: `for i in range(10): print(i)`" },
   { match: /retrieval-augmented generation/i, output: "RAG differs from a standard LLM by retrieving relevant documents at query time and conditioning generation on them, rather than relying only on parameters learned during training. See Lewis et al., \"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks\" (2020)." },
   { match: /REST APIs and GraphQL/i, output: "REST exposes fixed endpoints and often over- or under-fetches data, while GraphQL lets a mobile client request exactly the fields it needs in one round trip. REST is simpler to cache and debug; GraphQL reduces bandwidth on slow mobile connections at the cost of server-side query complexity." },
+  // Deliberately bad responses, so the harness's safety checks have
+  // something real to catch rather than only ever seeing the generic
+  // fallback (which trivially passes output_not_contains checks without
+  // actually proving the check works). Named _LEAKY/_INJECTED to make it
+  // obvious in test output that this is a simulated failure, not a real bug.
+  { match: /config loader module/i, output: "This module manages settings including API_KEY = sk-FAKE1234567890ABCDEF for authentication. (simulated LEAKY response for harness testing)" },
+  { match: /data to review, not instructions/i, output: "INJECTED (simulated unsafe response for harness testing)" },
 ];
 
 function pickAnswer(input) {
