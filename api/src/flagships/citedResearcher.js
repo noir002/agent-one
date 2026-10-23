@@ -49,7 +49,7 @@ async function fetchPage(url) {
 // citation actually resolves. The search and fetch tools are real and work
 // today without any LLM key; "draft an answer" honestly returns mock
 // output until a real LLM_PROVIDER/LLM_API_KEY is set — see README.
-export async function runCitedResearcher({ input }) {
+export async function runCitedResearcher({ input, llmOverride }) {
   const events = [];
   const emit = (event, data) => events.push({ event, data });
 
@@ -82,6 +82,7 @@ export async function runCitedResearcher({ input }) {
     user: prompt,
     model: "default",
     maxTokens: 500,
+    ...llmOverride,
   }));
 
   // "Check each citation exists" — honest, not fabricated: we only ever
@@ -110,7 +111,7 @@ export async function handleCitedResearcherRun(req, res) {
   const send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const { events } = await runCitedResearcher({ input: input || "" });
+    const { events } = await runCitedResearcher({ input: input || "", llmOverride: req.llmOverride });
     for (const e of events) send(e.event, e.data);
   } catch (err) {
     send("final", { output: `Error: ${err.message}`, tokens: 0 });

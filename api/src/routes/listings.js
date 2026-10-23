@@ -50,6 +50,12 @@ router.get("/", async (req, res) => {
     filter.lastVerifiedAt = { $ne: null };
   }
 
+  if (sort === "score") {
+    // Conflict of interest: Agent One's own flagships are never ranked
+    // against outside agents, per the HLD's anti-gaming rule.
+    filter.isFlagship = { $ne: true };
+  }
+
   let query = Listing.find(filter).select(PUBLIC_FIELDS);
 
   if (sort === "score") query = query.sort({ score: -1, lastVerifiedAt: -1 });

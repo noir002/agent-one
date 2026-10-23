@@ -136,7 +136,11 @@ export async function handleRepoFixerRun(req, res) {
   const send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const { events } = await runRepoFixer({ input, files: files?.length ? files : [{ path: "candidate.py", content: "" }] });
+    const { events } = await runRepoFixer({
+      input,
+      files: files?.length ? files : [{ path: "candidate.py", content: "" }],
+      llmOverride: req.llmOverride,
+    });
     for (const e of events) send(e.event, e.data);
   } catch (err) {
     send("final", { output: `Error: ${err.message}`, tokens: 0 });

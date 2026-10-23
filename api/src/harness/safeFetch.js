@@ -87,7 +87,11 @@ async function singleRequest(url, options, pinnedAddress, pinnedFamily) {
   return new Promise((resolve, reject) => {
     const req = transport.request(parsed, {
       method: options.method || "GET",
-      headers: options.headers,
+      // Some real sites (e.g. Wikipedia, per a live test during Phase 4)
+      // return 403 without an identifying User-Agent — a sane default
+      // avoids every caller needing to know that, while still letting a
+      // caller override it explicitly.
+      headers: { "User-Agent": "AgentOneHarness/1.0 (+https://agentone.example)", ...options.headers },
       timeout: options.timeoutMs,
       // Node's "Happy Eyeballs" dual-stack connect (default since Node 20)
       // can call `lookup` expecting an array of addresses when it wants to
