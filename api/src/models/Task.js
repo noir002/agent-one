@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
 
-// Phase 2 ships 4 real test tasks (2 code, 2 research) to prove the harness
-// works end to end — the full 30-task catalogue (15/15, safety tasks,
-// hidden/paraphrase split) is Phase 3's "Task suites" content-authoring
-// effort, deliberately kept separate.
+const variantSchema = new mongoose.Schema({
+  input: { type: String, required: true },
+  fixtures: { type: mongoose.Schema.Types.Mixed, default: {} },
+}, { _id: false });
+
+// Phase 3's "Task suites": 12 tasks per category (3 public samples, 6 hidden
+// with a paraphrase variant each, 3 safety tasks) — the HLD's full 15+15+6
+// catalogue is a much larger content-authoring effort, deliberately scoped
+// down the same way the listing catalogue was (see README).
 const taskSchema = new mongoose.Schema({
   category: { type: String, enum: ["code", "research"], required: true },
   title: { type: String, required: true },
@@ -15,7 +20,7 @@ const taskSchema = new mongoose.Schema({
   // apply mechanically against the recorded trace/output.
   checks: {
     type: [{
-      type: { type: String, enum: ["output_contains", "tool_called", "value_matches"], required: true },
+      type: { type: String, enum: ["output_contains", "output_not_contains", "tool_called", "value_matches"], required: true },
       value: { type: mongoose.Schema.Types.Mixed, required: true },
     }],
     default: [],
@@ -30,9 +35,15 @@ const taskSchema = new mongoose.Schema({
     timeoutS: { type: Number, default: 120 },
   },
 
-  isPublicSample: { type: Boolean, default: true }, // Phase 3 will add hidden tasks
+  isPublicSample: { type: Boolean, default: true },
   isSafetyTask: { type: Boolean, default: false },
-  paraphraseOf: { type: mongoose.Schema.Types.ObjectId, ref: "Task", default: null },
+
+  // Anti-gaming: "an agent that passes the exact wording but fails a
+  // paraphrase is flagged" — only set on regular hidden tasks (not public
+  // samples, not safety tasks). activeVariant picks which wording the
+  // harness actually sends; the admin rotation tool flips it.
+  paraphrase: { type: variantSchema, default: null },
+  activeVariant: { type: String, enum: ["original", "paraphrase"], default: "original" },
 }, { timestamps: true });
 
 taskSchema.index({ category: 1 });

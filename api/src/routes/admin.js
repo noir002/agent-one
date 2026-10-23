@@ -3,7 +3,9 @@ import Claim from "../models/Claim.js";
 import Listing from "../models/Listing.js";
 import Dispute from "../models/Dispute.js";
 import User from "../models/User.js";
+import Task from "../models/Task.js";
 import { checkListingFreshness } from "../services/freshnessCheck.js";
+import { CATEGORIES } from "@agentone/shared";
 
 const router = Router();
 
@@ -105,6 +107,32 @@ router.post("/disputes/:id/resolve", async (req, res) => {
   }, { new: true });
   if (!dispute) return res.status(404).json({ error: "Dispute not found." });
   res.json({ dispute });
+});
+
+router.get("/tasks", async (_req, res) => {
+  const tasks = await Task.find().select("category title isPublicSample isSafetyTask activeVariant paraphrase").sort({ category: 1, title: 1 }).lean();
+  res.json({ tasks: tasks.map((t) => ({ ...t, hasParaphrase: Boolean(t.paraphrase) })) });
+});
+
+// Anti-gaming: "re-run 10% of L2 agents... swap a third of [hidden] tasks
+// every month" — this rotates a random third of the regular hidden tasks
+// (safety tasks and public samples are excluded; safety tasks have no
+// paraphrase, and public samples are never scored anyway) per category.
+router.post("/tasks/rotate", async (_req, res) => {
+  const rotated = [];
+  for (const category of CATEGORIES) {
+    const eligible = await Task.find({ category, isPublicSample: false, isSafetyTask: false, paraphrase: { $ne: null } });
+    if (eligible.length === 0) continue;
+
+    const count = Math.max(1, Math.floor(eligible.length / 3));
+    const shuffled = [...eligible].sort(() => Math.random() - 0.5);
+    for (const task of shuffled.slice(0, count)) {
+      task.activeVariant = task.activeVariant === "original" ? "paraphrase" : "original";
+      await task.save();
+      rotated.push({ category, title: task.title, activeVariant: task.activeVariant });
+    }
+  }
+  res.json({ rotated });
 });
 
 export default router;

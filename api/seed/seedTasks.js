@@ -13,14 +13,25 @@ async function seed() {
   await connectDB();
   const tasks = JSON.parse(fs.readFileSync(path.join(__dirname, "tasks.json"), "utf-8"));
 
-  // Idempotent by (category, title) rather than a dedicated slug — Phase 2
-  // only has 4 hand-written tasks, so this is enough to avoid duplicates on
-  // re-seed without adding a field Phase 3's real suite doesn't need either.
+  // Full sync by (category, title): tasks.json is the source of truth, so
+  // anything in the DB but no longer in the file gets removed — otherwise
+  // Phase 2's 4 placeholder tasks would stick around and get mixed into
+  // real eval runs alongside Phase 3's real 24-task suite.
+  const keep = tasks.map((t) => ({ category: t.category, title: t.title }));
+  const removed = await Task.deleteMany({ $nor: keep.map((k) => ({ category: k.category, title: k.title })) });
+  if (removed.deletedCount) console.log(`[seed:tasks] removed ${removed.deletedCount} task(s) no longer in tasks.json`);
+
   for (const task of tasks) {
-    await Task.findOneAndUpdate(
+    // findOneAndReplace (not $set) so re-seeding an older document — e.g.
+    // one of Phase 2's 4 placeholder tasks that got reused by title here —
+    // ends up with exactly the new schema's shape, including defaults for
+    // fields the old document never had (activeVariant, paraphrase). $set
+    // only touches fields present in the payload and leaves everything
+    // else as-is, which silently left stale documents missing new fields.
+    await Task.findOneAndReplace(
       { category: task.category, title: task.title },
-      { $set: task },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      task,
+      { upsert: true }
     );
     console.log(`[seed:tasks] upserted ${task.category}/${task.title}`);
   }

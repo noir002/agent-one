@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { assertHostIsSafe } from "../safeFetch.js";
+import { getActiveTaskContent } from "../taskVariant.js";
 
 // Runs one task against an mcp-type agent: connects to its MCP server,
 // calls the first tool listed in the task's toolsAllowed (or the server's
@@ -20,6 +21,7 @@ export async function runMcpTask({ manifest, task }) {
 
   try {
     await assertHostIsSafe(manifest.interface.endpoint);
+    const { input } = getActiveTaskContent(task);
 
     const transport = new StreamableHTTPClientTransport(new URL(manifest.interface.endpoint));
     const client = new Client({ name: "agent-one-harness", version: "0.1.0" }, { capabilities: {} });
@@ -31,9 +33,9 @@ export async function runMcpTask({ manifest, task }) {
     const toolName = task.toolsAllowed.find((t) => tools.some((tool) => tool.name === t)) || tools[0]?.name;
     if (!toolName) throw new Error("MCP server exposes no usable tool for this task.");
 
-    events.push({ type: "tool_call", timestamp: new Date(), tokens: 0, data: { tool: toolName, input: task.input } });
+    events.push({ type: "tool_call", timestamp: new Date(), tokens: 0, data: { tool: toolName, input } });
 
-    const result = await client.callTool({ name: toolName, arguments: { input: task.input } });
+    const result = await client.callTool({ name: toolName, arguments: { input } });
     events.push({ type: "tool_result", timestamp: new Date(), tokens: 0, data: result });
 
     finalOutput = Array.isArray(result.content)

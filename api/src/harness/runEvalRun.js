@@ -60,8 +60,10 @@ export async function executeEvalRun(evalRunId) {
     const manifest = await Manifest.findById(evalRun.manifestId);
     if (!manifest) throw new Error("Manifest not found.");
 
-    const tasks = await Task.find({ category: manifest.category });
-    if (tasks.length === 0) throw new Error(`No tasks seeded for category "${manifest.category}".`);
+    // "Score only on hidden tasks" (HLD anti-gaming rule) — public samples
+    // exist so an owner can see the format, never to be scored against.
+    const tasks = await Task.find({ category: manifest.category, isPublicSample: false });
+    if (tasks.length === 0) throw new Error(`No hidden tasks seeded for category "${manifest.category}".`);
 
     const allTaskRuns = [];
     for (const task of tasks) {

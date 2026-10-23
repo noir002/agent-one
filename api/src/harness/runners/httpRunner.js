@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { safeFetchStream } from "../safeFetch.js";
+import { getActiveTaskContent } from "../taskVariant.js";
 
 const MAX_LINE_BYTES = 200_000; // a single SSE line this long is almost certainly abuse, not data
 
@@ -11,10 +12,11 @@ const MAX_LINE_BYTES = 200_000; // a single SSE line this long is almost certain
 export async function runHttpTask({ manifest, task, authToken }) {
   const started = Date.now();
   const taskId = crypto.randomUUID();
+  const { input, fixtures } = getActiveTaskContent(task);
   const body = JSON.stringify({
     task_id: taskId,
-    input: task.input,
-    files: [],
+    input,
+    files: fixtures?.files || [],
     tools_allowed: task.toolsAllowed,
     budget: task.budget,
   });
