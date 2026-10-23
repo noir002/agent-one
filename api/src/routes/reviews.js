@@ -61,6 +61,10 @@ router.post("/listings/:slug/quick-run", async (req, res) => {
     userId: req.user._id,
     input: input.trim(),
     output: result.finalOutput || "",
+    events: result.events || [],
+    tokens: result.tokens || 0,
+    costUsd: result.costUsd || 0,
+    latencyMs: result.latencyMs || 0,
     status: result.outcome === "error" ? "error" : "ok",
     errorMessage: result.errorMessage || "",
   });

@@ -351,7 +351,77 @@ piece of UI in the browser), not just unit-level API calls.
   admin console, rather than a dedicated review-queue UI — same shape as
   the admin tooling added in Phases 1-3.
 
-Not yet built (Phase 5+): onboarding real open-source agents through the
-docker runner (see above), share loops (badges, run pages, head-to-head),
-the MCP server / Agent Finder, and monetization. `OwnerDashboard` and the
-public `Disputes` page still don't exist as pages (the API routes do).
+Not yet built (Phase 6+): onboarding real open-source agents through the
+docker runner (see above), the MCP server / Agent Finder, and monetization.
+
+## What's built in Phase 6
+
+Share loops — public run pages, live SVG badges, head-to-head pages, Open
+Graph images, and a monthly benchmark report, per the HLD's exact Phase 6
+spec. Verified end-to-end: claimed two code-category listings, benchmarked
+both against the echo fixture, and drove every new page through the
+browser, not just the API.
+
+- **Public run pages** (`/runs/task/:id`, `/runs/quick/:id`) — a
+  step-by-step timeline (reusing the same `events[]` shape `TaskRun` has
+  had since Phase 2), the real output, deterministic check results (now
+  showing each check's pass/fail reason, not just an overall verdict), and
+  the judge verdict. **Resolved design call, not a loose end**: these show
+  the real hidden-task content — the anti-gaming defenses are paraphrase
+  and monthly task rotation surviving *partial* exposure, not secrecy of
+  wording forever, and a run page is only proof if it's the real thing.
+  `QuickRun` didn't store a trace before this phase (just final
+  input/output) — extended it with `events`/`tokens`/`costUsd`/`latencyMs`
+  (the runner already returns all of this; the route just wasn't saving
+  it) so its run page has a real timeline too, confirmed end-to-end with a
+  live quick-run.
+- **Live SVG badge** (`GET /api/listings/:slug/badge.svg`) — honest about
+  what's known: `L0`/`L1` show "Agent One · Listed", never a fabricated
+  score. **Found and fixed a real bug while testing it**: the badge
+  originally used `Listing.lastVerifiedAt` for "tested Nd ago" — that's
+  the daily *site-liveness* check, a different thing entirely, so a
+  same-day-benchmarked listing showed "not yet tested." Fixed to use the
+  latest `ScoreSnapshot.computedAt` instead, confirmed by re-fetching the
+  badge right after a real eval run and seeing "tested today." Listing
+  page now has a "Badge" section with live preview and copyable
+  Markdown/HTML embed snippets.
+- **Head-to-head pages** (`/head-to-head/:slugA/:slugB`) — a per-task
+  pass-rate table between two same-category listings, computed from each
+  one's most recent `EvalRun` (no new eval work; confirmed the table
+  matches the real `TaskRun` data for two listings benchmarked against the
+  same fixture). Cross-category pairs are rejected. `Compare.jsx` (2-3
+  agent metadata compare, Phase 1) gets a "View task-by-task breakdown"
+  link when exactly 2 selected listings share a category and both score.
+- **Open Graph images** — one shared SVG-card template
+  (`api/src/og/renderCard.js`) rasterized to PNG via `sharp` (new
+  dependency; prebuilt binaries, confirmed working on first try), reused
+  for run pages, head-to-head pages and the monthly report. All three
+  variants visually confirmed as real 1200×630 branded PNGs, not just
+  200-status checks.
+- **A real architectural problem, solved, not hand-waved**: the client is
+  a pure client-rendered SPA (`client/index.html` has one static
+  title/description, no SSR) — link-unfurling bots (X, LinkedIn, Discord)
+  read `<meta property="og:*">` from the raw HTML *without running JS*, so
+  a React-rendered page's tags are invisible to them. Built a small,
+  separate server-rendered stub per shareable resource
+  (`api/src/routes/share.js`, `GET /api/share/...`): a bot reads its
+  static OG tags, a human gets an instant `<meta refresh>` redirect to the
+  real SPA page. **Scope cut, stated plainly**: wiring a production proxy
+  to route bots vs. humans to this stub on the *same* URL is deployment
+  infra this project has never set up (dev runs client:5173 and api:4000
+  separately) — verified by curling each stub directly and inspecting the
+  tags/image, not a live social-platform unfurl test.
+- **Monthly benchmark report** (`api/scripts/generateReport.js`, `npm run
+  report:generate`, cron-ready) — snapshots the leaderboard per category
+  plus "most improved" (vs. the closest `ScoreSnapshot` ≥30 days old) and
+  "newly benchmarked" into a frozen `Report` document so a past month
+  stays stable as scores keep moving. Confirmed idempotent (re-running for
+  the same month overwrites in place) and confirmed it reflects real
+  listing data once two listings were actually benchmarked.
+
+**Scope cuts, same honesty as every phase:**
+- Flagship "Try it" runs stay ephemeral (SSE, nothing persisted) —
+  persisting anonymous visitor runs is a different concern from this
+  phase's signed-in `QuickRun`s and benchmark `TaskRun`s.
+- The production bot/human routing proxy for OG stubs (above) isn't built
+  — this project has no production deployment story yet at all.

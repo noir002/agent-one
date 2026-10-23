@@ -259,6 +259,28 @@ export default function Listing({ me }) {
         </section>
       )}
 
+      <section className="glass mt-8 rounded-card p-6">
+        <h2 className="font-heading text-sm font-semibold text-ink">Badge</h2>
+        <p className="mt-1 text-xs text-ink-muted">
+          Embed this on your README or site — it updates itself as the score does.
+        </p>
+        <img src={api.badgeUrl(listing.slug)} alt={`Agent One badge for ${listing.name}`} className="mt-3" />
+        <div className="mt-3 space-y-2">
+          <div>
+            <p className="text-xs text-ink-muted">Markdown</p>
+            <code className="mt-1 block overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-ink">
+              {`[![Agent One](${window.location.origin}${api.badgeUrl(listing.slug)})](${window.location.origin}/listing/${listing.slug})`}
+            </code>
+          </div>
+          <div>
+            <p className="text-xs text-ink-muted">HTML</p>
+            <code className="mt-1 block overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-ink">
+              {`<a href="${window.location.origin}/listing/${listing.slug}"><img src="${window.location.origin}${api.badgeUrl(listing.slug)}" alt="Agent One badge"></a>`}
+            </code>
+          </div>
+        </div>
+      </section>
+
       {canQuickRun && (
         <section className="glass mt-8 rounded-card p-6">
           <h2 className="font-heading text-sm font-semibold text-ink">Run it, then review</h2>
@@ -290,6 +312,9 @@ export default function Listing({ me }) {
                   <p className={quickRun.status === "error" ? "text-amber" : "text-ink-muted"}>
                     {quickRun.status === "error" ? quickRun.errorMessage || "The run failed." : quickRun.output}
                   </p>
+                  <Link to={`/runs/quick/${quickRun._id}`} className="mt-2 inline-block text-emerald hover:underline">
+                    View full trace & share →
+                  </Link>
                 </div>
               )}
               {quickRun && !reviewSubmitted && (
@@ -331,6 +356,7 @@ export default function Listing({ me }) {
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-amber">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
                   <span className="text-ink-muted">{r.userId?.name || "Anonymous"}</span>
+                  <Link to={`/runs/quick/${r.runId}`} className="text-emerald hover:underline">View run</Link>
                 </div>
                 {r.text && <p className="mt-1 text-xs text-ink-muted">{r.text}</p>}
               </div>

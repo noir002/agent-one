@@ -95,7 +95,10 @@ function ListingPanel({ listing }) {
                 <div className="mt-2 space-y-2">
                   {run.failedTaskRuns.map((tr) => (
                     <div key={tr._id} className="rounded border border-amber/30 p-2">
-                      <p className="text-amber">task {tr.taskId} · run {tr.runIndex} · {tr.outcome}{tr.errorMessage ? ` — ${tr.errorMessage}` : ""}</p>
+                      <p className="text-amber">
+                        task {tr.taskId} · run {tr.runIndex} · {tr.outcome}{tr.errorMessage ? ` — ${tr.errorMessage}` : ""}
+                        {" "}· <Link to={`/runs/task/${tr._id}`} className="text-emerald hover:underline">View trace</Link>
+                      </p>
                       <div className="mt-1 flex gap-2">
                         <input
                           value={disputeReason[tr._id] || ""}

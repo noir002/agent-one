@@ -10,6 +10,9 @@ import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
 import OwnerDashboard from "./pages/OwnerDashboard.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
+import RunPage from "./pages/RunPage.jsx";
+import HeadToHead from "./pages/HeadToHead.jsx";
+import Reports from "./pages/Reports.jsx";
 import HowWeMakeMoney from "./pages/HowWeMakeMoney.jsx";
 import { api } from "./lib/api.js";
 
@@ -44,6 +47,9 @@ export default function App() {
           <Route path="/listing/:slug" element={<Listing me={me} />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/runs/:kind/:id" element={<RunPage />} />
+          <Route path="/head-to-head/:slugA/:slugB" element={<HeadToHead />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/submit" element={<Submit me={me} />} />
           <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
           <Route path="/owner" element={<OwnerDashboard me={me} />} />

@@ -62,6 +62,15 @@ export default function Compare() {
 
       {error && <p className="mt-4 text-sm text-amber">{error}</p>}
 
+      {listings.length === 2 && listings[0].score != null && listings[1].score != null && listings[0].category === listings[1].category && (
+        <Link
+          to={`/head-to-head/${listings[0].slug}/${listings[1].slug}`}
+          className="mt-4 inline-block text-sm text-emerald hover:underline"
+        >
+          View task-by-task breakdown →
+        </Link>
+      )}
+
       {listings.length >= 2 && (
         <div className="mt-8 overflow-x-auto">
           <table className="w-full text-left text-sm">

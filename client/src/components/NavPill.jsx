@@ -12,6 +12,7 @@ export default function NavPill({ me, onLogout }) {
           <Link to="/" className="hover:text-ink">Explore</Link>
           <Link to="/compare" className="hover:text-ink">Compare</Link>
           <Link to="/leaderboard" className="hover:text-ink">Leaderboard</Link>
+          <Link to="/reports" className="hover:text-ink">Reports</Link>
           <Link to="/submit" className="hover:text-ink">Submit</Link>
         </div>
         <div className="flex items-center gap-3">

@@ -62,6 +62,15 @@ export const api = {
   getScoreGapFlags: () => request("/admin/score-gap-flags"),
   clearScoreGapFlag: (id) => request(`/admin/listings/${id}/clear-score-gap-flag`, { method: "POST" }),
 
+  // Share loops: public run pages, head-to-head, reports
+  getTaskRun: (id) => request(`/runs/task/${id}`),
+  getQuickRun: (id) => request(`/runs/quick/${id}`),
+  getHeadToHead: (slugA, slugB) => request(`/head-to-head/${slugA}/${slugB}`),
+  getReports: () => request("/reports"),
+  getReport: (month) => request(`/reports/${month}`),
+  badgeUrl: (slug) => `${BASE}/listings/${slug}/badge.svg`,
+  shareUrl: (path) => `${BASE}/share${path}`,
+
   // Auth
   me: () => request("/me"),
   devLogin: (name, role) => request("/auth/dev-login", { method: "POST", body: JSON.stringify({ name, role }) }),

@@ -1,8 +1,10 @@
 import { Router } from "express";
 import Listing from "../models/Listing.js";
 import Manifest from "../models/Manifest.js";
+import ScoreSnapshot from "../models/ScoreSnapshot.js";
 import { CATEGORIES, LISTING_TYPES, PRICING_MODELS, INTERFACE_TYPES } from "@agentone/shared";
 import { slugify } from "../utils/slugify.js";
+import { renderBadgeSvg } from "../og/badge.js";
 
 const router = Router();
 const PUBLIC_FIELDS = "slug name type category tier tagline description pricing openSource "
@@ -119,6 +121,21 @@ router.post("/", async (req, res) => {
   });
 
   res.status(201).json({ listing });
+});
+
+// "Badge embed code" on the listing page (Phase 6) points here.
+router.get("/:slug/badge.svg", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug, status: "active" })
+    .select("name tier score").lean();
+  if (!listing) return res.status(404).type("text/plain").send("Not found");
+
+  const latestSnapshot = listing.score != null
+    ? await ScoreSnapshot.findOne({ listingId: listing._id }).sort({ computedAt: -1 }).select("computedAt").lean()
+    : null;
+
+  res.set("Content-Type", "image/svg+xml");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.send(renderBadgeSvg({ ...listing, scoreComputedAt: latestSnapshot?.computedAt }));
 });
 
 router.get("/:slug", async (req, res) => {
