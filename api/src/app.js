@@ -22,6 +22,7 @@ import reportsRoutes from "./routes/reports.js";
 import ogRoutes from "./routes/og.js";
 import shareRoutes from "./routes/share.js";
 import mcpRoutes from "./routes/mcp.js";
+import ciRoutes from "./routes/ci.js";
 import authRoutes from "./routes/auth.js";
 import statsRoutes from "./routes/stats.js";
 import devAuthRoutes from "./auth/devAuth.js";
@@ -72,6 +73,9 @@ app.use("/api/share", shareRoutes);
 // specifically so outside AI assistants — not just our own SPA's origin —
 // can call it (the HLD's "MCP server for 'find me a verified agent'").
 app.use("/api/mcp", cors(), mcpRoutes);
+// Bearer-token auth (routes/ci.js), not session cookies — a build pipeline
+// has no browser session.
+app.use("/api/ci", ciRoutes);
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/flagships", flagshipsRoutes);
 app.use("/api/me", authRoutes);

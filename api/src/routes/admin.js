@@ -5,6 +5,7 @@ import Dispute from "../models/Dispute.js";
 import User from "../models/User.js";
 import Task from "../models/Task.js";
 import { checkListingFreshness } from "../services/freshnessCheck.js";
+import { paymentProvider } from "../payments/provider.js";
 import { CATEGORIES } from "@agentone/shared";
 
 const router = Router();
@@ -84,6 +85,19 @@ router.post("/listings/:id/merge-into/:targetId", async (req, res) => {
   res.json({ listing, target });
 });
 
+// "Sponsored slots on category pages: always labelled 'Sponsored'" (HLD,
+// Phase 8) — the field (Listing.isSponsored) has existed since Phase 1 and
+// is already structurally excluded from every scoring/ranking query
+// (buildListingSort, findAgentsForTask); this is just the first way to
+// actually set it.
+router.post("/listings/:id/toggle-sponsored", async (req, res) => {
+  const listing = await Listing.findById(req.params.id);
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  listing.isSponsored = !listing.isSponsored;
+  await listing.save();
+  res.json({ listing });
+});
+
 router.post("/listings/:id/recheck-freshness", async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   if (!listing) return res.status(404).json({ error: "Listing not found." });
@@ -154,6 +168,39 @@ router.post("/tasks/rotate", async (_req, res) => {
     }
   }
   res.json({ rotated });
+});
+
+// "Leave a clean payment interface; I will choose the gateway later" (HLD,
+// Phase 8) — these two routes are the only places a plan/credit grant can
+// happen today (no gateway yet), and even they go through
+// payments/provider.js's MockPaymentProvider rather than writing User
+// fields inline, so a real gateway's webhook handler can call the same
+// provider later without touching these routes.
+router.get("/users", async (req, res) => {
+  const q = String(req.query.q || "").trim();
+  if (!q) return res.json({ users: [] });
+  const users = await User.find({ name: new RegExp(q, "i") }).select("name email role plan credits").limit(10).lean();
+  res.json({ users });
+});
+
+router.post("/users/:id/grant-plan", async (req, res) => {
+  const { plan } = req.body || {};
+  if (!["free", "verification_pro"].includes(plan)) {
+    return res.status(400).json({ error: 'plan must be "free" or "verification_pro".' });
+  }
+  const user = await paymentProvider.grantPlan(req.params.id, plan);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  res.json({ user });
+});
+
+router.post("/users/:id/grant-credits", async (req, res) => {
+  const amount = Number(req.body?.amount);
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return res.status(400).json({ error: "amount must be a positive integer." });
+  }
+  const user = await paymentProvider.grantCredits(req.params.id, amount);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  res.json({ user });
 });
 
 export default router;

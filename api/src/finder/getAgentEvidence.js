@@ -14,7 +14,12 @@ export async function getAgentEvidence(slug) {
     .select("slug name tier score scoreParts isFlagship").lean();
   if (!listing) return null;
 
-  const evalRun = await EvalRun.findOne({ listingId: listing._id, status: "done" }).sort({ completedAt: -1 }).select("_id completedAt manifestVersion").lean();
+  // isPrivate: false — this should reflect the evidence behind the
+  // listing's *public* score, which a private EvalRun (Phase 8) never
+  // published; its TaskRuns also 404 on the public run-page route for
+  // anyone but the owner/admin, so handing them out here would be a dead
+  // end for everyone else.
+  const evalRun = await EvalRun.findOne({ listingId: listing._id, status: "done", isPrivate: false }).sort({ completedAt: -1 }).select("_id completedAt manifestVersion").lean();
 
   const taskRuns = evalRun
     ? await TaskRun.find({ evalRunId: evalRun._id }).select("_id outcome").sort({ createdAt: -1 }).limit(RUNS_PER_SOURCE).lean()

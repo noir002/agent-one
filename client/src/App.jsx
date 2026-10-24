@@ -52,7 +52,7 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/submit" element={<Submit me={me} />} />
           <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
-          <Route path="/owner" element={<OwnerDashboard me={me} />} />
+          <Route path="/owner" element={<OwnerDashboard me={me} setMe={setMe} />} />
           <Route path="/admin" element={<Admin me={me} />} />
           <Route path="/how-we-make-money" element={<HowWeMakeMoney />} />
         </Routes>

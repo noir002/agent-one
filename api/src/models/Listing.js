@@ -59,6 +59,14 @@ const listingSchema = new mongoose.Schema({
     }, { _id: false }),
     default: null,
   },
+
+  // Monetization hooks (Phase 8). hideTraceDetail only ever redacts a
+  // public run page's events/output for non-owners (routes/runs.js) —
+  // the score and pass/fail stay visible and real either way. ciTokenHash
+  // is a sha256 of a bearer token shown once at generation (routes/
+  // evalRuns.js); the raw token is never stored.
+  hideTraceDetail: { type: Boolean, default: false },
+  ciTokenHash: { type: String, default: null },
 }, { timestamps: true });
 
 listingSchema.index({ category: 1 });

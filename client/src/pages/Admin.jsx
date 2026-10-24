@@ -177,9 +177,98 @@ function ListingTools() {
             <button onClick={() => act(api.hideListing)} className="rounded-full border border-amber/40 px-3 py-1.5 text-xs text-amber">Hide</button>
             <button onClick={() => act(api.unhideListing)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink">Unhide</button>
             <button onClick={() => act(api.recheckFreshness)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink">Re-check freshness</button>
+            <button onClick={() => act(api.toggleSponsored)} className="rounded-full border border-violet/40 px-3 py-1.5 text-xs text-violet">Toggle sponsored</button>
           </div>
         )}
         {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
+      </div>
+    </section>
+  );
+}
+
+// "Leave a clean payment interface; I will choose the gateway later" (HLD,
+// Phase 8) — until there's a real gateway, this is the only way to grant a
+// plan or credits: through api/src/payments/provider.js's
+// MockPaymentProvider, never a direct field write.
+function BillingTools() {
+  const [q, setQ] = useState("");
+  const [users, setUsers] = useState([]);
+  const [message, setMessage] = useState("");
+  const [creditAmounts, setCreditAmounts] = useState({});
+
+  const search = async () => {
+    try {
+      const { users } = await api.searchUsers(q);
+      setUsers(users);
+      setMessage(users.length ? "" : "No users found.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const grantPlan = async (id, plan) => {
+    try {
+      await api.grantPlan(id, plan);
+      setMessage(`Granted ${plan === "verification_pro" ? "Verification Pro" : "Free"} — no real charge occurred.`);
+      search();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const grantCredits = async (id) => {
+    const amount = Number(creditAmounts[id]);
+    if (!Number.isInteger(amount) || amount <= 0) return;
+    try {
+      await api.grantCredits(id, amount);
+      setMessage(`Granted ${amount} credit(s) — no real charge occurred.`);
+      setCreditAmounts((prev) => ({ ...prev, [id]: "" }));
+      search();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  return (
+    <section className="mt-10">
+      <h2 className="font-heading text-lg font-semibold text-ink">Billing (mock — no live payments)</h2>
+      <div className="glass mt-3 rounded-card p-4">
+        <div className="flex gap-2">
+          <input
+            value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()}
+            placeholder="search users by name"
+            className="glass-chip flex-1 rounded-full px-3 py-1.5 text-xs text-ink focus:outline-none"
+          />
+          <button onClick={search} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">Search</button>
+        </div>
+        {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
+        <div className="mt-3 space-y-2">
+          {users.map((u) => (
+            <div key={u._id} className="rounded-lg border border-white/10 p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-ink">{u.name} <span className="text-ink-muted">({u.role})</span></span>
+                <span className="font-mono text-ink-muted">{u.plan} · {u.credits || 0} credits</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => grantPlan(u._id, u.plan === "verification_pro" ? "free" : "verification_pro")}
+                  className="rounded-full border border-violet/40 px-3 py-1 text-violet"
+                >
+                  {u.plan === "verification_pro" ? "Revoke Verification Pro" : "Grant Verification Pro"}
+                </button>
+                <input
+                  value={creditAmounts[u._id] || ""}
+                  onChange={(e) => setCreditAmounts((prev) => ({ ...prev, [u._id]: e.target.value }))}
+                  placeholder="credits"
+                  className="glass-chip w-20 rounded-full px-3 py-1 text-ink focus:outline-none"
+                />
+                <button onClick={() => grantCredits(u._id)} className="rounded-full border border-white/15 px-3 py-1 text-ink hover:bg-white/5">
+                  Grant credits
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -261,6 +350,7 @@ export default function Admin({ me }) {
         <DisputesQueue />
         <ListingTools />
         <ScoreGapFlags />
+        <BillingTools />
         <TasksPanel />
       </div>
     </div>

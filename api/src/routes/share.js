@@ -68,7 +68,10 @@ function ogBase(req) {
 router.get("/runs/task/:id", async (req, res) => {
   const taskRun = await TaskRun.findById(req.params.id).select("taskId evalRunId outcome").lean();
   if (!taskRun) return res.status(404).type("text/plain").send("Not found");
-  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId").lean();
+  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId isPrivate").lean();
+  // Unauthenticated share-stub route — a private EvalRun (Phase 8) is
+  // never exposed here either, same as routes/runs.js and routes/og.js.
+  if (evalRun?.isPrivate) return res.status(404).type("text/plain").send("Not found");
   const [task, listing] = await Promise.all([
     Task.findById(taskRun.taskId).select("title").lean(),
     Listing.findById(evalRun?.listingId).select("slug name").lean(),

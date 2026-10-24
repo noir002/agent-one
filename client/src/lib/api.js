@@ -62,6 +62,15 @@ export const api = {
   getScoreGapFlags: () => request("/admin/score-gap-flags"),
   clearScoreGapFlag: (id) => request(`/admin/listings/${id}/clear-score-gap-flag`, { method: "POST" }),
 
+  // Monetization hooks (Phase 8)
+  requestPrivateEvaluation: (slug) => request(`/listings/${slug}/evaluate-private`, { method: "POST" }),
+  generateCiToken: (slug) => request(`/listings/${slug}/ci-token`, { method: "POST" }),
+  setHideTraceDetail: (slug, hideTraceDetail) => request(`/listings/${slug}/hide-trace-detail`, { method: "POST", body: JSON.stringify({ hideTraceDetail }) }),
+  toggleSponsored: (id) => request(`/admin/listings/${id}/toggle-sponsored`, { method: "POST" }),
+  searchUsers: (q) => request(`/admin/users?q=${encodeURIComponent(q)}`),
+  grantPlan: (id, plan) => request(`/admin/users/${id}/grant-plan`, { method: "POST", body: JSON.stringify({ plan }) }),
+  grantCredits: (id, amount) => request(`/admin/users/${id}/grant-credits`, { method: "POST", body: JSON.stringify({ amount }) }),
+
   // Share loops: public run pages, head-to-head, reports
   getTaskRun: (id) => request(`/runs/task/${id}`),
   getQuickRun: (id) => request(`/runs/quick/${id}`),

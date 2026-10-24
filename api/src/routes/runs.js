@@ -17,14 +17,32 @@ router.get("/task/:id", async (req, res) => {
   const taskRun = await TaskRun.findById(req.params.id).lean();
   if (!taskRun) return res.status(404).json({ error: "Run not found." });
 
-  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId manifestVersion completedAt").lean();
+  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId manifestVersion completedAt isPrivate").lean();
   if (!evalRun) return res.status(404).json({ error: "Run not found." });
 
   const [task, listing, siblingRuns] = await Promise.all([
     Task.findById(taskRun.taskId).select("title category").lean(),
-    Listing.findById(evalRun.listingId).select("slug name").lean(),
+    Listing.findById(evalRun.listingId).select("slug name ownerId hideTraceDetail").lean(),
     TaskRun.find({ evalRunId: taskRun.evalRunId, taskId: taskRun.taskId }).select("outcome runIndex").lean(),
   ]);
+
+  const isOwnerOrAdmin = Boolean(req.user) && (req.user.role === "admin" || (listing?.ownerId && listing.ownerId.equals(req.user._id)));
+
+  // "Private eval runs (no public score)" (HLD, Phase 8) — a private run's
+  // existence isn't revealed to anyone but the owner/admin, same as any
+  // resource that shouldn't leak via a guessable ID.
+  if (evalRun.isPrivate && !isOwnerOrAdmin) {
+    return res.status(404).json({ error: "Run not found." });
+  }
+
+  // "Private trace detail" (HLD, Phase 8, Verification Pro) — the score
+  // and pass/fail outcome stay real and public either way; only the raw
+  // trace content is redacted for non-owner viewers.
+  if (listing?.hideTraceDetail && !isOwnerOrAdmin) {
+    taskRun.events = [];
+    taskRun.finalOutput = "";
+    taskRun.traceHidden = true;
+  }
 
   res.json({
     taskRun,

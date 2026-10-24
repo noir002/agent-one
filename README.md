@@ -489,3 +489,69 @@ protocol client rather than a browser.
   cookie-session-safe single-origin policy.
 - No API-key/auth layer on the public API or MCP server — the HLD calls
   it a "public read API," meant to be callable by any assistant.
+
+## What's built in Phase 8
+
+Monetization hooks — the HLD's last build phase. Real data model fields,
+real admin/owner actions, real gated behavior; payment itself stays
+stubbed, exactly as the HLD frames it ("no live payments yet... I will
+choose the gateway later"). The HLD's rule for this phase — *"no payment,
+plan or sponsorship may change a score, tier, leaderboard position or
+Agent Finder result"* — was verified directly, not just designed for:
+granted Verification Pro and credits, ran a real benchmark both ways, and
+confirmed the score/tier computation (`scoring.js`/`executeEvalRun`) never
+branches on either.
+
+- **Plans** (`User.plan`) — a free-plan owner gets one manual re-test per
+  24h; Pro and admin bypass it. **Found and fixed a real bug while
+  testing this**: the cooldown counted *any* user-triggered `EvalRun`,
+  including the automatic one `POST /manifest` queues on a version bump —
+  so simply reconnecting a manifest immediately burned a free owner's
+  entire daily allowance before they'd ever clicked "Request re-test."
+  Fixed by adding `EvalRun.triggerSource` (`manual`/`manifest_version`/
+  `ci`/`spotcheck`) so the cooldown only ever counts actual manual
+  requests. Pro also unlocks a CI hook (`POST /api/ci/evaluate`,
+  bearer-token auth — confirmed it works with no session cookie and
+  rejects a wrong/missing token) and a private-trace-detail toggle
+  (confirmed `GET /api/runs/task/:id` redacts `events`/`finalOutput` for
+  anonymous/other-user requests while the owner still sees everything).
+- **Private eval runs behind credits** — spending a credit runs the
+  *exact* same grading pipeline (same deterministic checks, same judge,
+  same `TaskRun` storage) but `executeEvalRun` skips the
+  `Listing.score`/`scoreParts`/`tier` write and the `ScoreSnapshot.create`
+  call. Confirmed live: triggered a private run, watched the public score
+  stay unchanged and the score-history length stay at 1. **Found and
+  fixed four real leaks while verifying this**: `findAgentsForTask`,
+  `getAgentEvidence`, the head-to-head route, and the OG-image/share-stub
+  routes for a task run all picked the *most recent* `EvalRun` regardless
+  of privacy — so a private run's pass/fail counts, "evidence" links, and
+  even its share card could surface through Agent Finder, the MCP server,
+  a head-to-head comparison, or a shared link, defeating the entire point
+  of "private." Every one of those now excludes `isPrivate: true` runs,
+  and the public run-page route 404s a private `TaskRun` to anyone but
+  the owner/admin (confirmed for anonymous, owner, and admin requests).
+- **Sponsored slots** — `isSponsored` has existed since Phase 1 with no
+  way to set it; added an admin toggle and a "Sponsored" strip on the
+  home page's category view. Confirmed directly, not just by code
+  inspection, that toggling it changes nothing about `sort=score` order
+  or `find_agent_for_task`'s recommendation (re-ran both before/after).
+- **Clean payment interface** (`api/src/payments/provider.js`) — one
+  `grantPlan`/`grantCredits` interface, one `MockPaymentProvider`
+  implementation; the admin console's "Grant Verification Pro" and
+  "Grant credits" actions are the only things that call it. A real
+  gateway's webhook handler would call the same two methods instead of
+  an admin route — the seam the HLD asked for.
+- **"How we make money"** updated from all-"Planned" (Phase 1) to what's
+  actually real now, and a stray "Fast-track claims" entry — a Phase 1
+  guess, not an actual HLD Phase 8 line item — was dropped rather than
+  marked done it never was.
+
+**Scope cuts, same honesty as every phase:**
+- Sponsored slots are admin-set only — no self-serve purchase flow, no
+  expiry date; consistent with "no live payments yet."
+- Credits and plan grants are admin-only "simulate" actions — there's no
+  real checkout anywhere in the app.
+- The CI token is single-token-per-listing with no scoping beyond
+  "trigger a re-test," no rotation history.
+
+This completes all 8 phases of the HLD's build order.

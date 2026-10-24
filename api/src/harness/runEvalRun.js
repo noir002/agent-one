@@ -79,23 +79,31 @@ export async function executeEvalRun(evalRunId) {
 
     const { score, parts } = computeEvalRunScore(allTaskRuns, tasks, evalRun.completedAt);
 
-    await ScoreSnapshot.create({
-      listingId: evalRun.listingId,
-      manifestVersion: evalRun.manifestVersion,
-      score,
-      parts,
-      computedAt: evalRun.completedAt,
-    });
+    // "Private eval runs (no public score) behind a credits field" (HLD,
+    // Phase 8) — grading above ran through the identical pipeline either
+    // way (same deterministic checks, same judge, same TaskRun storage);
+    // a private run only skips *publishing* the result. No payment/plan
+    // ever reaches the scoring math itself — this is a visibility gate on
+    // the output of computeEvalRunScore, not a different computation.
+    if (!evalRun.isPrivate) {
+      await ScoreSnapshot.create({
+        listingId: evalRun.listingId,
+        manifestVersion: evalRun.manifestVersion,
+        score,
+        parts,
+        computedAt: evalRun.completedAt,
+      });
 
-    const listing = await Listing.findById(evalRun.listingId);
-    listing.score = score;
-    listing.scoreParts = parts;
-    // A successful benchmark run always means at least L2 (Benchmarked) —
-    // normally a listing reaches this via L1 first (claimed + owner-verified),
-    // but an admin can also connect a manifest directly from L0, so promote
-    // from either; never downgrade L3 (Sandboxed is Phase 4's higher tier).
-    if (listing.tier === "L0" || listing.tier === "L1") listing.tier = "L2";
-    await listing.save();
+      const listing = await Listing.findById(evalRun.listingId);
+      listing.score = score;
+      listing.scoreParts = parts;
+      // A successful benchmark run always means at least L2 (Benchmarked) —
+      // normally a listing reaches this via L1 first (claimed + owner-verified),
+      // but an admin can also connect a manifest directly from L0, so promote
+      // from either; never downgrade L3 (Sandboxed is Phase 4's higher tier).
+      if (listing.tier === "L0" || listing.tier === "L1") listing.tier = "L2";
+      await listing.save();
+    }
 
     return { evalRun, score, parts };
   } catch (err) {

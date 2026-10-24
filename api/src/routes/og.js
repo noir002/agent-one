@@ -21,7 +21,11 @@ async function sendCard(res, opts) {
 router.get("/run/task/:id.png", async (req, res) => {
   const taskRun = await TaskRun.findById(req.params.id).select("taskId evalRunId outcome").lean();
   if (!taskRun) return res.status(404).end();
-  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId").lean();
+  const evalRun = await EvalRun.findById(taskRun.evalRunId).select("listingId isPrivate").lean();
+  // This is a crawler/share-facing, unauthenticated image endpoint — a
+  // private EvalRun's (Phase 8) card is never generated here, full stop,
+  // matching routes/runs.js's 404 for the same TaskRun.
+  if (evalRun?.isPrivate) return res.status(404).end();
   const [task, listing, siblings] = await Promise.all([
     Task.findById(taskRun.taskId).select("title").lean(),
     Listing.findById(evalRun?.listingId).select("name").lean(),

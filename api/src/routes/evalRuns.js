@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { Router } from "express";
 import Listing from "../models/Listing.js";
 import Manifest from "../models/Manifest.js";
@@ -8,11 +9,19 @@ import { parseManifest, ManifestError } from "../manifest/parse.js";
 import ScoreSnapshot from "../models/ScoreSnapshot.js";
 
 const router = Router();
+const FREE_PLAN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function canEvaluate(listing, user) {
   if (!user) return false;
   if (user.role === "admin") return true;
   return Boolean(listing.ownerId) && listing.ownerId.equals(user._id);
+}
+
+// Admins always bypass plan gates (same convention as canEvaluate above) —
+// this never affects scoring, only who's allowed to trigger/configure a
+// run, so there's no anti-gaming concern in letting admins act freely here.
+function hasVerificationPro(user) {
+  return Boolean(user) && (user.role === "admin" || user.plan === "verification_pro");
 }
 
 // Owner connects (or updates) their agentone.yaml. The HLD requires a fresh
@@ -58,6 +67,7 @@ router.post("/listings/:slug/manifest", async (req, res) => {
       manifestId: manifest._id,
       manifestVersion: manifest.version,
       triggeredBy: req.user._id,
+      triggerSource: "manifest_version",
       status: "queued",
     });
     await enqueueEvalRun(evalRun._id);
@@ -79,6 +89,27 @@ router.post("/listings/:slug/evaluate", async (req, res) => {
     return res.status(409).json({ error: "This listing has no connected manifest yet." });
   }
 
+  // "More frequent re-tests" is a Verification Pro benefit (HLD, Phase 8)
+  // — Free-plan owners get one manual re-test per 24h. This only gates how
+  // often a run can be *requested*; it never touches what a run scores.
+  // The manifest-version-bump auto-retest (POST /manifest, above) is
+  // unaffected either way.
+  if (!hasVerificationPro(req.user)) {
+    const recent = await EvalRun.findOne({
+      listingId: listing._id,
+      triggerSource: "manual",
+      isPrivate: false, // a credits-paid private run is a separate allowance, never consumes this one
+      createdAt: { $gte: new Date(Date.now() - FREE_PLAN_COOLDOWN_MS) },
+    }).sort({ createdAt: -1 });
+    if (recent) {
+      const retryAt = new Date(recent.createdAt.getTime() + FREE_PLAN_COOLDOWN_MS);
+      return res.status(429).json({
+        error: `Free plan allows one manual re-test per 24h. Try again after ${retryAt.toISOString()}, or upgrade to Verification Pro.`,
+        retryAt,
+      });
+    }
+  }
+
   const manifest = await Manifest.findById(listing.manifestId);
   if (!manifest) return res.status(409).json({ error: "Manifest record is missing." });
 
@@ -87,12 +118,93 @@ router.post("/listings/:slug/evaluate", async (req, res) => {
     manifestId: manifest._id,
     manifestVersion: manifest.version,
     triggeredBy: req.user._id,
+    triggerSource: "manual",
     status: "queued",
   });
 
   await enqueueEvalRun(evalRun._id);
 
   res.status(202).json({ evalRun });
+});
+
+// "Private eval runs (no public score) behind a credits field" (HLD,
+// Phase 8) — same pipeline as a normal re-test, just flagged isPrivate so
+// executeEvalRun skips publishing the score (see harness/runEvalRun.js).
+router.post("/listings/:slug/evaluate-private", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug });
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  if (!canEvaluate(listing, req.user)) {
+    return res.status(403).json({ error: "Only the listing's owner or an admin can trigger a private evaluation." });
+  }
+  if (!listing.manifestId) {
+    return res.status(409).json({ error: "This listing has no connected manifest yet." });
+  }
+  if (req.user.role !== "admin" && (req.user.credits || 0) < 1) {
+    return res.status(402).json({ error: "This requires at least 1 credit. Credits are granted by an admin for now (no live payments yet)." });
+  }
+
+  const manifest = await Manifest.findById(listing.manifestId);
+  if (!manifest) return res.status(409).json({ error: "Manifest record is missing." });
+
+  if (req.user.role !== "admin") {
+    req.user.credits -= 1;
+    await req.user.save();
+  }
+
+  const evalRun = await EvalRun.create({
+    listingId: listing._id,
+    manifestId: manifest._id,
+    manifestVersion: manifest.version,
+    triggeredBy: req.user._id,
+    triggerSource: "manual",
+    isPrivate: true,
+    status: "queued",
+  });
+
+  await enqueueEvalRun(evalRun._id);
+
+  res.status(202).json({ evalRun, creditsRemaining: req.user.credits });
+});
+
+// CI hook endpoint (Verification Pro only, HLD Phase 8) — generates a
+// bearer token for POST /api/ci/evaluate (routes/ci.js), shown once here.
+// Regenerating invalidates the previous token (only one live at a time).
+router.post("/listings/:slug/ci-token", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug });
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  if (!canEvaluate(listing, req.user)) {
+    return res.status(403).json({ error: "Only the listing's owner or an admin can manage its CI token." });
+  }
+  if (!hasVerificationPro(req.user)) {
+    return res.status(403).json({ error: "The CI hook endpoint requires Verification Pro." });
+  }
+
+  const token = crypto.randomBytes(24).toString("hex");
+  listing.ciTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  await listing.save();
+
+  res.status(201).json({ token, note: "Shown once — store it now. Regenerating replaces it." });
+});
+
+// Private trace detail (Verification Pro only, HLD Phase 8) — toggles
+// whether GET /api/runs/task/:id (routes/runs.js) redacts this listing's
+// events/finalOutput for non-owner viewers. Never affects the score/tier,
+// which stay public and real either way.
+router.post("/listings/:slug/hide-trace-detail", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug });
+  if (!listing) return res.status(404).json({ error: "Listing not found." });
+  if (!canEvaluate(listing, req.user)) {
+    return res.status(403).json({ error: "Only the listing's owner or an admin can change this." });
+  }
+  if (!hasVerificationPro(req.user)) {
+    return res.status(403).json({ error: "Private trace detail requires Verification Pro." });
+  }
+
+  const { hideTraceDetail } = req.body || {};
+  listing.hideTraceDetail = Boolean(hideTraceDetail);
+  await listing.save();
+
+  res.json({ listing });
 });
 
 // Recent run history for the owner dashboard — status, score-relevant

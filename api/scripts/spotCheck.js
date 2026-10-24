@@ -40,6 +40,7 @@ async function main() {
       manifestId: manifest._id,
       manifestVersion: manifest.version,
       triggeredBy: null, // system-triggered
+      triggerSource: "spotcheck",
       status: "queued",
     });
 

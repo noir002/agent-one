@@ -33,6 +33,13 @@ export default function Home() {
     listings: listings.filter((l) => l.category === c.category),
   }));
 
+  // "Sponsored slots on category pages: always labelled 'Sponsored'" (HLD,
+  // Phase 8) — only shown once a category is picked, pulled from the same
+  // listings already fetched for it (no new query, no effect on their real
+  // sort order elsewhere — buildListingSort and findAgentsForTask never
+  // reference isSponsored).
+  const sponsoredInCategory = category ? listings.filter((l) => l.isSponsored) : [];
+
   const recentlyVerified = [...listings]
     .filter((l) => l.lastVerifiedAt)
     .sort((a, b) => new Date(b.lastVerifiedAt) - new Date(a.lastVerifiedAt))
@@ -89,6 +96,15 @@ export default function Home() {
         </div>
 
         {error && <p className="mt-4 text-sm text-amber">{error}</p>}
+
+        {sponsoredInCategory.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-xs uppercase tracking-wide text-amber">Sponsored</h2>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sponsoredInCategory.map((l) => <ListingCard key={l.slug} listing={l} />)}
+            </div>
+          </section>
+        )}
 
         <div className="mt-6">
           {view === "forest" ? (

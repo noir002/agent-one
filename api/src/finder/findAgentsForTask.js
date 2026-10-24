@@ -35,7 +35,11 @@ export async function findAgentsForTask(taskDescription) {
   }
 
   const withEvidence = await Promise.all(candidates.map(async (listing) => {
-    const evalRun = await EvalRun.findOne({ listingId: listing._id, status: "done" }).sort({ completedAt: -1 }).select("_id").lean();
+    // isPrivate: false — a private EvalRun (Phase 8 credits feature) never
+    // published this listing's current score, so its TaskRuns must never
+    // be handed out as "evidence" for it either (the public run-page route
+    // 404s them for non-owners anyway, but a dead link would still be a bug).
+    const evalRun = await EvalRun.findOne({ listingId: listing._id, status: "done", isPrivate: false }).sort({ completedAt: -1 }).select("_id").lean();
     const passingRun = evalRun
       ? await TaskRun.findOne({ evalRunId: evalRun._id, outcome: "pass" }).select("_id").lean()
       : null;

@@ -7,8 +7,11 @@ import Task from "../models/Task.js";
 const router = Router();
 const LISTING_FIELDS = "slug name tier score scoreParts category";
 
+// isPrivate: false — this page is fully public, so a private EvalRun
+// (Phase 8 credits feature — no public score) must never surface here,
+// even just as pass/fail counts; that would defeat the point of "private."
 async function latestDoneEvalRun(listingId) {
-  return EvalRun.findOne({ listingId, status: "done" }).sort({ completedAt: -1 }).lean();
+  return EvalRun.findOne({ listingId, status: "done", isPrivate: false }).sort({ completedAt: -1 }).lean();
 }
 
 // "Agent A vs Agent B on 30 research tasks" (HLD) — a task-by-task
