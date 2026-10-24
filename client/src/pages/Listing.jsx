@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import TierBadge from "../components/TierBadge.jsx";
 import { freshnessLabel, initials } from "../lib/format.js";
+import { buildListingJsonLd } from "../lib/jsonLd.js";
 import { CATEGORY_LABELS } from "@agentone/shared";
 
 export default function Listing({ me }) {
@@ -37,6 +38,20 @@ export default function Listing({ me }) {
     api.getReviews(slug).then((d) => setReviews(d.reviews)).catch(() => {});
     api.getScoreHistory(slug).then((d) => setScoreHistory(d.history)).catch(() => {});
   }, [slug]);
+
+  // schema.org structured data (Phase 7) — defense-in-depth for crawlers
+  // that do run JS (Googlebot); the server-rendered stub at
+  // api/src/routes/share.js's GET /listings/:slug is what matters for ones
+  // that don't. Injected once the listing has loaded, cleaned up on unmount
+  // or slug change so stale script tags don't pile up during SPA navigation.
+  useEffect(() => {
+    if (!data?.listing) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(buildListingJsonLd(data.listing, reviews, `${window.location.origin}/listing/${slug}`));
+    document.head.appendChild(script);
+    return () => document.head.removeChild(script);
+  }, [data?.listing, reviews, slug]);
 
   const handleClaim = async () => {
     setClaimError("");
@@ -186,7 +201,11 @@ export default function Listing({ me }) {
           <textarea
             value={tryInput}
             onChange={(e) => setTryInput(e.target.value)}
-            placeholder={listing.slug === "repo-fixer" ? "Describe the bug to fix…" : "Ask a research question…"}
+            placeholder={
+              listing.slug === "repo-fixer" ? "Describe the bug to fix…"
+              : listing.slug === "agent-finder" ? "Describe what you need an agent to do…"
+              : "Ask a research question…"
+            }
             rows={3}
             className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
           />

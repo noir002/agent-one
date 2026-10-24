@@ -425,3 +425,67 @@ browser, not just the API.
   phase's signed-in `QuickRun`s and benchmark `TaskRun`s.
 - The production bot/human routing proxy for OG stubs (above) isn't built
   — this project has no production deployment story yet at all.
+
+## What's built in Phase 7
+
+Agent-readable directory and Agent Finder — per the HLD's exact spec: a
+public read API with rate limits, an MCP server, Agent Finder as the third
+flagship, and `llms.txt`/schema.org data. This phase's audience is AI
+assistants, not human visitors, so most of it was verified with a real
+protocol client rather than a browser.
+
+- **Agent Finder** (third flagship, `api/src/flagships/agentFinder.js`) —
+  the one piece of this phase a human sees: a "Try it" box on its listing
+  page like the other two flagships. **Its selection logic never touches
+  an LLM**, unlike Repo Fixer/Cited Researcher: `findAgentsForTask`
+  (`api/src/finder/findAgentsForTask.js`) ranks only real, benchmarked
+  (`score != null`) listings by `$text` relevance, falling back to
+  top-score if nothing matches. An LLM call (skipped entirely in mock
+  mode — confirmed via a live "Try it" run, no fabricated prose attached)
+  only narrates an *already-fixed* list, which is what makes this
+  provably compliant with "no payment, plan or sponsorship may change...
+  Agent Finder result" (HLD) — not a promise, a property of the code path.
+  Not benchmarked itself (no hidden-task suite fits "recommend an agent");
+  category `support` is a bookkeeping field only, documented as such.
+- **MCP server** (`api/src/mcp/server.js` + `api/src/routes/mcp.js`,
+  mounted at `/api/mcp`) — `search_agents`, `get_agent_evidence`,
+  `find_agent_for_task`, all three wrapping the exact same functions the
+  REST API and Agent Finder use (the shared query builder extracted from
+  `routes/listings.js` into `listings/queryBuilder.js`, plus
+  `findAgentsForTask`/`getAgentEvidence`). Session-stateful streamable-HTTP
+  transport with a per-session map — the server-side mirror of the
+  client-side session-conflation fix from Phase 2's `mcpRunner.js`.
+  **Verified as a real MCP round-trip, not an HTTP 200 check**:
+  `api/scripts/verifyMcp.js` (`npm run mcp:verify`, kept as a permanent dev
+  tool) connects with the SDK's own client and calls all three tools for
+  real — confirmed `find_agent_for_task` returns nothing until a listing
+  is actually benchmarked, then returns it with a working evidence link
+  once it is.
+- **Rate limiting** (`express-rate-limit`, new dependency, global on
+  `/api` in `app.js`) — 300 requests/15min per IP. **Confirmed it actually
+  blocks**: fired real requests past the threshold and got a genuine 429,
+  not just inspected that the middleware was wired in.
+- **`llms.txt`** (`GET /llms.txt`, outside `/api`, generated live from
+  real top-scored listings on every request — never hand-maintained, so
+  it can't drift).
+- **schema.org** — extends the exact share-stub mechanism from Phase 6
+  with `GET /api/share/listings/:slug` (`SoftwareApplication` JSON-LD):
+  `aggregateRating` from real `Review` stars (Phase 5), a separate
+  `additionalProperty` for the Agent One benchmark score (a different
+  scale/meaning, not conflated with user ratings). Confirmed both fields
+  populate correctly once a listing actually has a score and a review.
+  Also injected client-side on `Listing.jsx` (defense-in-depth for
+  JS-executing crawlers like Googlebot) via a small duplicated builder
+  (`client/src/lib/jsonLd.js` — same api/client duplication tradeoff
+  `format.js`'s `daysSince` already makes). A 4th OG card variant
+  (`/api/og/listing/:slug.png`) was added for consistency even though the
+  HLD only asked for structured data here, since it's a two-line reuse of
+  Phase 6's existing card template.
+
+**Scope cuts, same honesty as every phase:**
+- The open CORS policy needed for the MCP endpoint (so assistants other
+  than our own SPA's origin can call it) is scoped to exactly that one
+  route, not widened app-wide — the rest of the API keeps its
+  cookie-session-safe single-origin policy.
+- No API-key/auth layer on the public API or MCP server — the HLD calls
+  it a "public read API," meant to be callable by any assistant.

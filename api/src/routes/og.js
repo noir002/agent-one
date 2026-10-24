@@ -64,6 +64,19 @@ router.get("/head-to-head/:slugA/:slugB.png", async (req, res) => {
   });
 });
 
+router.get("/listing/:slug.png", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug, status: "active" })
+    .select("name category tier score tagline").lean();
+  if (!listing) return res.status(404).end();
+
+  await sendCard(res, {
+    eyebrow: CATEGORY_LABELS[listing.category] || listing.category,
+    title: listing.name,
+    big: listing.score != null ? String(Math.round(listing.score)) : listing.tier,
+    subtitle: listing.tagline || "On Agent One — tested, not just claimed.",
+  });
+});
+
 router.get("/reports/:month.png", async (req, res) => {
   const report = await Report.findOne({ month: req.params.month }).lean();
   if (!report) return res.status(404).end();

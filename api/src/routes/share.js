@@ -5,6 +5,8 @@ import Task from "../models/Task.js";
 import QuickRun from "../models/QuickRun.js";
 import Listing from "../models/Listing.js";
 import Report from "../models/Report.js";
+import Review from "../models/Review.js";
+import { buildListingJsonLd } from "../og/jsonLd.js";
 
 const router = Router();
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
@@ -26,11 +28,16 @@ function escapeHtml(str) {
 
 // title/description can embed a user-submitted listing name (POST
 // /listings) — escaped before going into either attributes or body text.
-function stubHtml({ title, description, image, redirectTo }) {
+// jsonLd (schema.org, Phase 7) is JSON we build ourselves from trusted
+// field names, but still passed through JSON.stringify only — never
+// string-concatenated — so a listing name containing "</script>" can't
+// break out of the tag.
+function stubHtml({ title, description, image, redirectTo, jsonLd }) {
   const t = escapeHtml(title);
   const d = escapeHtml(description);
   const img = escapeHtml(image);
   const url = escapeHtml(redirectTo);
+  const ld = jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>\n` : "";
   return `<!doctype html>
 <html>
 <head>
@@ -41,7 +48,7 @@ function stubHtml({ title, description, image, redirectTo }) {
 <meta property="og:image" content="${img}">
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="refresh" content="0;url=${url}">
-</head>
+${ld}</head>
 <body>
 <p>${d}</p>
 <p><a href="${url}">View it on Agent One</a></p>
@@ -112,6 +119,29 @@ router.get("/reports/:month", async (req, res) => {
     description: `${report.totalBenchmarked} agents benchmarked by real, recorded runs this month.`,
     image: `${ogBase(req)}/reports/${report.month}.png`,
     redirectTo: `${CLIENT_ORIGIN}/reports?month=${report.month}`,
+  });
+});
+
+// schema.org structured data (HLD, Phase 7) — "be the source AI assistants
+// cite." Same stub mechanism as every other shareable resource above, plus
+// a JSON-LD <script> a non-JS crawler can read directly (client/Listing.jsx
+// also injects the same JSON-LD on mount, as defense-in-depth for crawlers
+// that do run JS, e.g. Googlebot).
+router.get("/listings/:slug", async (req, res) => {
+  const listing = await Listing.findOne({ slug: req.params.slug, status: "active" }).lean();
+  if (!listing) return res.status(404).type("text/plain").send("Not found");
+
+  const reviewAgg = await Review.aggregate([
+    { $match: { listingId: listing._id } },
+    { $group: { _id: null, avg: { $avg: "$stars" }, count: { $sum: 1 } } },
+  ]);
+
+  send(res, {
+    title: `${listing.name} · Agent One`,
+    description: listing.tagline || listing.description || `${listing.name} on Agent One.`,
+    image: `${ogBase(req)}/listing/${listing.slug}.png`,
+    redirectTo: `${CLIENT_ORIGIN}/listing/${listing.slug}`,
+    jsonLd: buildListingJsonLd(listing, reviewAgg[0], `${CLIENT_ORIGIN}/listing/${listing.slug}`),
   });
 });
 

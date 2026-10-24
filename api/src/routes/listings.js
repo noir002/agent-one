@@ -5,11 +5,9 @@ import ScoreSnapshot from "../models/ScoreSnapshot.js";
 import { CATEGORIES, LISTING_TYPES, PRICING_MODELS, INTERFACE_TYPES } from "@agentone/shared";
 import { slugify } from "../utils/slugify.js";
 import { renderBadgeSvg } from "../og/badge.js";
+import { PUBLIC_LISTING_FIELDS as PUBLIC_FIELDS, buildListingFilter, buildListingSort } from "../listings/queryBuilder.js";
 
 const router = Router();
-const PUBLIC_FIELDS = "slug name type category tier tagline description pricing openSource "
-  + "interfaceType sourceUrl repoUrl logoUrl status isFlagship isSponsored lastVerifiedAt "
-  + "lastCheckStatus score scoreParts createdAt";
 
 router.get("/categories", async (_req, res) => {
   const counts = await Listing.aggregate([
@@ -32,43 +30,9 @@ router.get("/compare", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const {
-    q, category, tier, type, pricing, interfaceType, openSource, section, sort,
-  } = req.query;
-
-  const filter = { status: "active" };
-  if (category) filter.category = category;
-  if (tier) filter.tier = tier;
-  if (type) filter.type = type;
-  if (pricing) filter.pricing = pricing;
-  if (interfaceType) filter.interfaceType = interfaceType;
-  if (openSource === "true") filter.openSource = true;
-  if (q) filter.$text = { $search: String(q) };
-
-  if (section === "new") {
-    // "New this week"
-    filter.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
-  } else if (section === "recently-verified") {
-    filter.lastVerifiedAt = { $ne: null };
-  }
-
-  if (sort === "score") {
-    // Conflict of interest: Agent One's own flagships are never ranked
-    // against outside agents, per the HLD's anti-gaming rule.
-    filter.isFlagship = { $ne: true };
-  }
-
-  let query = Listing.find(filter).select(PUBLIC_FIELDS);
-
-  if (sort === "score") query = query.sort({ score: -1, lastVerifiedAt: -1 });
-  else if (sort === "new") query = query.sort({ createdAt: -1 });
-  else if (section === "recently-verified") query = query.sort({ lastVerifiedAt: -1 });
-  else {
-    // Default: tier (higher first), then freshness — stale listings sink.
-    query = query.sort({ tier: -1, lastVerifiedAt: -1, name: 1 });
-  }
-
-  const listings = await query.limit(200).lean();
+  const filter = buildListingFilter(req.query);
+  const sort = buildListingSort(req.query);
+  const listings = await Listing.find(filter).select(PUBLIC_FIELDS).sort(sort).limit(200).lean();
   res.json({ listings });
 });
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { handleRepoFixerRun } from "../flagships/repoFixer.js";
 import { handleCitedResearcherRun } from "../flagships/citedResearcher.js";
+import { handleAgentFinderRun } from "../flagships/agentFinder.js";
 
 const router = Router();
 const VISITOR_DAILY_TRY_LIMIT = 5;
@@ -8,6 +9,7 @@ const VISITOR_DAILY_TRY_LIMIT = 5;
 const HANDLERS = {
   "repo-fixer": handleRepoFixerRun,
   "cited-researcher": handleCitedResearcherRun,
+  "agent-finder": handleAgentFinderRun,
 };
 
 // Real Task API endpoints — this is what the harness's httpRunner calls
@@ -15,6 +17,10 @@ const HANDLERS = {
 // No visitor cap here: the harness itself enforces run limits and budgets.
 router.post("/repo-fixer/run", handleRepoFixerRun);
 router.post("/cited-researcher/run", handleCitedResearcherRun);
+// Agent Finder is never run through the eval harness (no hidden-task suite
+// fits "recommend 3 agents") but still exposes a real Task API endpoint for
+// consistency with the other flagships and its own manifest.
+router.post("/agent-finder/run", handleAgentFinderRun);
 
 // The public, lower-friction "Try it" path for a visitor on the listing
 // page — capped per visitor per day (session-based, same pattern as v1's
