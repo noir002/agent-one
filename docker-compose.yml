@@ -6,3 +6,57 @@ services:
       - "27017:27017"
     volumes:
       - ./mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w api
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/agentone
+      REDIS_URL: redis://redis:6379
+      CLIENT_ORIGIN: http://localhost:5173
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w worker
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/agentone
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w client -- --host
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+      - /app/node_modules

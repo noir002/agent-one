@@ -1,0 +1,29 @@
+[
+  {
+    "slug": "repo-fixer",
+    "name": "Repo Fixer",
+    "category": "code",
+    "tagline": "Built by Agent One — runs the test, reads the failure, and fixes it",
+    "description": "Repo Fixer is one of Agent One's own flagship agents: given a buggy file and a task description, it checks the code, asks an LLM for a fix, verifies the result actually parses in an isolated sandbox, and retries up to 5 times. Labelled \"Built by Agent One\" and excluded from leaderboards, per the HLD's conflict-of-interest rule.",
+    "endpointPath": "/api/flagships/repo-fixer/run",
+    "toolsAllowed": ["code.exec", "fs.read", "fs.write"]
+  },
+  {
+    "slug": "cited-researcher",
+    "name": "Cited Researcher",
+    "category": "research",
+    "tagline": "Built by Agent One — searches, fetches, and only cites what it actually read",
+    "description": "Cited Researcher is one of Agent One's own flagship agents: it searches the web, fetches candidate pages, and drafts an answer that only cites sources it successfully fetched. Labelled \"Built by Agent One\" and excluded from leaderboards, per the HLD's conflict-of-interest rule.",
+    "endpointPath": "/api/flagships/cited-researcher/run",
+    "toolsAllowed": ["web.search", "web.fetch"]
+  },
+  {
+    "slug": "agent-finder",
+    "name": "Agent Finder",
+    "category": "support",
+    "tagline": "Built by Agent One — searches verified listings and recommends 3, with links to evidence",
+    "description": "Agent Finder is one of Agent One's own flagship agents: given a task description, it searches only verified (benchmarked) listings, ranks them by real recorded scores, and recommends up to 3 with links to the real run pages proving each score. Selection never involves an LLM, so no payment, plan or sponsorship can change its result, per the HLD's anti-gaming rule. Labelled \"Built by Agent One\" and excluded from leaderboards and benchmarking (there is no hidden-task suite for \"recommend an agent\"); category is `support` as a bookkeeping field only — it doesn't belong to any one category.",
+    "endpointPath": "/api/flagships/agent-finder/run",
+    "toolsAllowed": ["agentone.search_verified_agents"]
+  }
+]

@@ -1,95 +1,147 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api.js";
+import SearchBar from "../components/SearchBar.jsx";
+import CategoryPills from "../components/CategoryPills.jsx";
+import Filters from "../components/Filters.jsx";
+import ListingCard from "../components/ListingCard.jsx";
+import ForestView from "../scenes/Forest/ForestView.jsx";
 
-const GROVE_LABELS = {
-  study: "Study",
-  exams: "Exams",
-  code: "Code",
-  career: "Career",
-  research: "Research",
-  productivity: "Productivity",
-};
-
-function badgeColor(badge) {
-  if (badge === "verified") return "bg-emerald text-white";
-  if (badge === "growing") return "bg-emerald-light text-white";
-  return "bg-panel text-ink-muted";
-}
-
-export default function Home({ me }) {
-  const [groves, setGroves] = useState([]);
+export default function Home() {
+  const [categories, setCategories] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [listings, setListings] = useState([]);
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [filters, setFilters] = useState({ tier: "", type: "", pricing: "", interfaceType: "", openSource: "" });
+  const [view, setView] = useState("forest"); // "forest" | "grid"
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.getForest()
-      .then((data) => setGroves(data.groves))
-      .catch((err) => setError(err.message));
+    api.getCategories().then((d) => setCategories(d.categories)).catch(() => {});
+    api.getStats().then(setStats).catch(() => {});
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return groves;
-    const q = query.toLowerCase();
-    return groves
-      .map((g) => ({ ...g, agents: g.agents.filter((a) => a.name.toLowerCase().includes(q)) }))
-      .filter((g) => g.agents.length > 0);
-  }, [groves, query]);
+  useEffect(() => {
+    api.getListings({ category, q: query, ...filters })
+      .then((d) => setListings(d.listings))
+      .catch((err) => setError(err.message));
+  }, [category, query, filters]);
+
+  const groves = categories.map((c) => ({
+    category: c.category,
+    listings: listings.filter((l) => l.category === c.category),
+  }));
+
+  // "Sponsored slots on category pages: always labelled 'Sponsored'" (HLD,
+  // Phase 8) — only shown once a category is picked, pulled from the same
+  // listings already fetched for it (no new query, no effect on their real
+  // sort order elsewhere — buildListingSort and findAgentsForTask never
+  // reference isSponsored).
+  const sponsoredInCategory = category ? listings.filter((l) => l.isSponsored) : [];
+
+  const recentlyVerified = [...listings]
+    .filter((l) => l.lastVerifiedAt)
+    .sort((a, b) => new Date(b.lastVerifiedAt) - new Date(a.lastVerifiedAt))
+    .slice(0, 6);
 
   return (
     <div>
-      <section className="py-10 text-center sm:py-16">
-        <h1 className="font-serif text-4xl font-semibold leading-tight sm:text-6xl">
-          A forest of AI agents,<br />grown by students.
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-ink-muted">
-          24 native agents plus 10 unofficial prototypes inspired by popular AI tools, across study, exams,
-          code, career, research and productivity. Run one, rate it, or plant your own.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <a href="#forest" className="btn-primary">Explore the forest</a>
-          {!me?.user && <Link to="/login" className="btn-secondary">Sign in</Link>}
+      <section className="relative overflow-hidden pb-10 pt-6">
+        <div className="aurora-hero" />
+        <div className="relative mx-auto max-w-3xl px-4 text-center">
+          <h1 className="font-heading text-4xl font-semibold leading-tight text-ink sm:text-5xl">
+            Every agent, tested.
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm text-ink-muted">
+            Other directories list agents and link out. We connect to agents, run them on standard tasks,
+            and publish the trace — so every score is a real, recorded run.
+          </p>
+
+          <div className="mt-8">
+            <SearchBar value={query} onChange={setQuery} />
+          </div>
+
+          <div className="mt-5">
+            <CategoryPills categories={categories} active={category} onSelect={setCategory} />
+          </div>
+
+          {stats && (
+            <div className="mt-8 flex justify-center gap-8 font-mono text-sm text-ink-muted">
+              <div><span className="text-ink">{stats.agentsListed}</span> listed</div>
+              <div><span className="text-ink">{stats.agentsTested}</span> tested</div>
+              <div><span className="text-ink">{stats.runsThisWeek}</span> runs this week</div>
+            </div>
+          )}
         </div>
       </section>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search agents…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-full border border-border-pill px-5 py-3 text-sm outline-none focus:border-emerald"
-        />
-      </div>
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="flex items-center justify-between">
+          <Filters filters={filters} onChange={setFilters} />
+          <div className="glass-chip flex rounded-full p-1">
+            <button
+              onClick={() => setView("forest")}
+              className={`rounded-full px-3 py-1 text-xs ${view === "forest" ? "bg-emerald text-bg" : "text-ink-muted"}`}
+            >
+              Forest
+            </button>
+            <button
+              onClick={() => setView("grid")}
+              className={`rounded-full px-3 py-1 text-xs ${view === "grid" ? "bg-emerald text-bg" : "text-ink-muted"}`}
+            >
+              Grid
+            </button>
+          </div>
+        </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 text-sm text-amber">{error}</p>}
 
-      <div id="forest" className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {filtered.map((grove) => (
-          <div key={grove.grove} className="card">
-            <Link to={`/grove/${grove.grove}`} className="font-serif text-xl font-semibold capitalize hover:text-emerald">
-              {GROVE_LABELS[grove.grove] || grove.grove}
-            </Link>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {grove.agents.map((agent) => (
-                <Link
-                  key={agent.slug}
-                  to={`/agent/${agent.slug}`}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${badgeColor(agent.badge)}`}
-                  title={agent.tagline}
-                >
-                  {agent.name} · {agent.score}{agent.isExternal && " ↗"}
-                </Link>
-              ))}
-              {grove.agents.length === 0 && (
-                <span className="text-sm text-ink-muted">No agents yet.</span>
+        {sponsoredInCategory.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-xs uppercase tracking-wide text-amber">Sponsored</h2>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sponsoredInCategory.map((l) => <ListingCard key={l.slug} listing={l} />)}
+            </div>
+          </section>
+        )}
+
+        <div className="mt-6">
+          {view === "forest" ? (
+            <ForestView groves={groves} query={query} />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map((l) => <ListingCard key={l.slug} listing={l} />)}
+              {listings.length === 0 && !error && (
+                <p className="col-span-full py-10 text-center text-sm text-ink-muted">No listings match your filters yet.</p>
               )}
             </div>
-          </div>
-        ))}
-        {filtered.length === 0 && !error && (
-          <p className="text-sm text-ink-muted">No agents match your search.</p>
+          )}
+        </div>
+
+        {recentlyVerified.length > 0 && (
+          <section className="mt-16">
+            <h2 className="font-heading text-xl font-semibold text-ink">Recently verified</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {recentlyVerified.map((l) => <ListingCard key={l.slug} listing={l} />)}
+            </div>
+          </section>
         )}
+
+        <section className="my-16 glass rounded-card p-8 text-center">
+          <h2 className="font-heading text-xl font-semibold text-ink">Know an agent that should be here?</h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            Claim a listing you own, or submit one we haven't found yet.
+          </p>
+          <div className="mt-5 flex justify-center gap-3">
+            <Link to="/submit" className="rounded-full bg-emerald px-5 py-2.5 text-sm font-medium text-bg hover:opacity-90">
+              Submit an agent
+            </Link>
+            <Link to="/how-we-make-money" className="rounded-full border border-white/15 px-5 py-2.5 text-sm text-ink hover:bg-white/5">
+              How we make money
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );
