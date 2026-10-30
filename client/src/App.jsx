@@ -13,6 +13,7 @@ import Leaderboard from "./pages/Leaderboard.jsx";
 import RunPage from "./pages/RunPage.jsx";
 import HeadToHead from "./pages/HeadToHead.jsx";
 import Reports from "./pages/Reports.jsx";
+import Directory from "./pages/Directory.jsx";
 import HowWeMakeMoney from "./pages/HowWeMakeMoney.jsx";
 import { api } from "./lib/api.js";
 
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/runs/:kind/:id" element={<RunPage />} />
           <Route path="/head-to-head/:slugA/:slugB" element={<HeadToHead />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/directory" element={<Directory me={me} />} />
           <Route path="/submit" element={<Submit me={me} />} />
           <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
           <Route path="/owner" element={<OwnerDashboard me={me} setMe={setMe} />} />

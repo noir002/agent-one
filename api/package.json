@@ -9,6 +9,8 @@
     "seed": "node seed/seed.js",
     "seed:tasks": "node seed/seedTasks.js",
     "seed:flagships": "node seed/seedFlagships.js",
+    "seed:directory": "node scripts/seedDirectoryTools.js",
+    "directory:check-security": "node scripts/checkDirectoryToolSecurity.js",
     "freshness:check": "node scripts/freshnessCheck.js",
     "spotcheck": "node scripts/spotCheck.js",
     "report:generate": "node scripts/generateReport.js",

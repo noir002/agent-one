@@ -15,6 +15,9 @@ export default function Listing({ me }) {
   const [claimError, setClaimError] = useState("");
   const [domainCheck, setDomainCheck] = useState(null);
   const [tryInput, setTryInput] = useState("");
+  const [tryFilename, setTryFilename] = useState("candidate.py");
+  const [tryFileContent, setTryFileContent] = useState("");
+  const [tryFileUploadError, setTryFileUploadError] = useState("");
   const [tryOutput, setTryOutput] = useState("");
   const [tryEvents, setTryEvents] = useState([]);
   const [tryRunning, setTryRunning] = useState(false);
@@ -72,6 +75,33 @@ export default function Listing({ me }) {
     }
   };
 
+  const MAX_UPLOAD_BYTES = 64 * 1024;
+
+  // repoFixer.js's detectLanguage only distinguishes .js from "everything
+  // else is Python" — so only those two actually get a real syntax check
+  // server-side. The 64KB cap keeps the file well within the fix prompt's
+  // token budget (maxTokens: 500 server-side) rather than silently
+  // truncating something larger.
+  const handleFileUpload = async (e) => {
+    setTryFileUploadError("");
+    const file = e.target.files?.[0];
+    e.target.value = ""; // lets the same file be re-selected later
+    if (!file) return;
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setTryFileUploadError(`That file is ${Math.round(file.size / 1024)}KB — keep it under ${MAX_UPLOAD_BYTES / 1024}KB.`);
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      setTryFilename(file.name);
+      setTryFileContent(text);
+    } catch {
+      setTryFileUploadError("Couldn't read that file — make sure it's plain text source code.");
+    }
+  };
+
   const handleTryIt = async () => {
     setTryError("");
     setTryOutput("");
@@ -80,6 +110,13 @@ export default function Listing({ me }) {
     try {
       const body = { input: tryInput };
       if (byokProvider && byokKey) body.byok = { provider: byokProvider, apiKey: byokKey };
+      // Without a real file, Repo Fixer has nothing to fix — it falls back
+      // to a blank placeholder server-side (see api/src/flagships/
+      // repoFixer.js) and just generates something from scratch, which
+      // isn't really "fixing" anything.
+      if (slug === "repo-fixer" && tryFileContent.trim()) {
+        body.files = [{ path: tryFilename.trim() || "candidate.py", content: tryFileContent }];
+      }
       const res = await fetch(`/api/flagships/${slug}/try`, {
         method: "POST",
         credentials: "include",
@@ -195,8 +232,8 @@ export default function Listing({ me }) {
         <section className="glass mt-8 rounded-card p-6">
           <h2 className="font-heading text-sm font-semibold text-ink">Try it</h2>
           <p className="mt-1 text-xs text-ink-muted">
-            5 free tries a day. Its reasoning runs on Agent One's own LLM config (mock by default —
-            see the README); paste your own key below to use your model for just this run. Never stored.
+            5 free tries a day on Agent One's own LLM config (mock by default — see the README).
+            Paste your own key below for unlimited tries on your own model — never stored, used for just this run.
           </p>
           <textarea
             value={tryInput}
@@ -209,6 +246,35 @@ export default function Listing({ me }) {
             rows={3}
             className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
           />
+          {listing.slug === "repo-fixer" && (
+            <div className="mt-2">
+              <p className="text-xs text-ink-muted">
+                Upload the buggy file (or paste it below) — without one, there's nothing real to fix.
+                Only .py and .js get a real syntax check.
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <label className="glass-chip cursor-pointer rounded-full px-3 py-1.5 text-xs text-ink hover:bg-white/5">
+                  Upload file…
+                  <input type="file" accept=".py,.js,.ts,.jsx,.tsx,.txt" onChange={handleFileUpload} className="hidden" />
+                </label>
+                {tryFileContent && <span className="text-xs text-ink-muted">{tryFilename} loaded ({tryFileContent.length} chars)</span>}
+              </div>
+              {tryFileUploadError && <p className="mt-1 text-xs text-amber">{tryFileUploadError}</p>}
+              <input
+                value={tryFilename}
+                onChange={(e) => setTryFilename(e.target.value)}
+                placeholder="filename, e.g. candidate.py"
+                className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+              />
+              <textarea
+                value={tryFileContent}
+                onChange={(e) => setTryFileContent(e.target.value)}
+                placeholder={"def add(a, b):\n    return a - b  # bug: should be +"}
+                rows={5}
+                className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+              />
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             <select value={byokProvider} onChange={(e) => setByokProvider(e.target.value)} className="glass-chip rounded-full px-3 py-1.5 text-xs text-ink">
               <option value="">Use Agent One's config</option>
@@ -227,7 +293,7 @@ export default function Listing({ me }) {
           </div>
           <button
             onClick={handleTryIt}
-            disabled={tryRunning || !tryInput.trim()}
+            disabled={tryRunning || !tryInput.trim() || (listing.slug === "repo-fixer" && !tryFileContent.trim())}
             className="mt-3 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50"
           >
             {tryRunning ? "Running…" : "Run"}

@@ -22,6 +22,20 @@ function detectLanguage(filename) {
   return "python"; // every other fixture in the catalogue is Python
 }
 
+// Models asked for "only the corrected code, no prose" routinely still wrap
+// the answer in a markdown fence (```python ... ```) — confirmed live:
+// every attempt failed checkSyntax on the literal "```python" line as the
+// first line, because the fenced text was written straight to the file and
+// then fed back as "current code" into the next attempt, repeating the
+// same syntax error every time. Extracts the first fenced block if present
+// (tolerates a leading sentence before it); falls back to the trimmed raw
+// text when the model didn't fence it at all.
+function stripCodeFence(text) {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```[a-zA-Z0-9_+-]*\n([\s\S]*?)```/);
+  return fenced ? fenced[1].trim() : trimmed;
+}
+
 // A real syntax check, not a faked pass — this is the one part of the loop
 // that's genuinely verifiable without an LLM key: can the candidate fix
 // even be parsed? A broken fix (common from a mock/weak model) gets caught
@@ -117,7 +131,7 @@ export async function runRepoFixer({ input, files, llmOverride }) {
       emit("message", { text: "mock mode: no real fix available without a real LLM key.", tokens: 0 });
       break;
     }
-    currentContent = fixText;
+    currentContent = stripCodeFence(fixText);
   }
 
   const finalOutput = currentContent;

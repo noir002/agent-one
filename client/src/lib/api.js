@@ -80,6 +80,16 @@ export const api = {
   badgeUrl: (slug) => `${BASE}/listings/${slug}/badge.svg`,
   shareUrl: (path) => `${BASE}/share${path}`,
 
+  // Community directory (separate, lightweight collection — distinct from
+  // Listings/the eval harness)
+  getDirectoryTools: (params = {}) => {
+    const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ""));
+    return request(`/directory?${new URLSearchParams(clean)}`);
+  },
+  getDirectoryTool: (slug) => request(`/directory/${slug}`),
+  rateDirectoryTool: (slug, stars, text) => request(`/directory/${slug}/rate`, { method: "POST", body: JSON.stringify({ stars, text }) }),
+  getDirectoryToolRatings: (slug) => request(`/directory/${slug}/ratings`),
+
   // Auth
   me: () => request("/me"),
   devLogin: (name, role) => request("/auth/dev-login", { method: "POST", body: JSON.stringify({ name, role }) }),

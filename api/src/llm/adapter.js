@@ -8,6 +8,18 @@
 // without mutating global env state, which would race across concurrent
 // requests from different visitors.
 
+// Agent One's own default models, used whenever a caller doesn't pass an
+// explicit model (the judge, the flagships' non-BYOK path). Providers
+// deprecate model IDs over time — "gemini-2.0-flash" and
+// "llama-3.1-8b-instant" (the previous defaults here) both now 404 against
+// their respective APIs. Confirmed current/working directly against each
+// provider before picking these: gemini-3.8-flash is Google's "use for new
+// projects" stable flash-tier model as of Oct 2026 (ai.google.dev/gemini-
+// api/docs/models); openai/gpt-oss-20b is a real entry in Groq's live
+// /v1/models list (the old Llama 3.1 ids have been removed entirely).
+const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
+
 function* wordChunks(text) {
   const words = text.split(" ");
   for (let i = 0; i < words.length; i += 1) {
@@ -35,15 +47,26 @@ async function* mockGenerate({ system, user }) {
 }
 
 async function* geminiGenerate({ system, user, model, maxTokens, apiKey }) {
-  const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || "gemini-2.0-flash");
+  const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || DEFAULT_GEMINI_MODEL);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  // The Gemini 3 series thinks by default (high, unless told otherwise) —
+  // same risk class confirmed above for Groq's gpt-oss models: at this
+  // app's modest maxOutputTokens (the judge uses 150), thinking alone can
+  // exhaust the budget before any answer text is written. thinking_level
+  // is Gemini-3-specific (per ai.google.dev/gemini-api/docs/gemini-3), so
+  // it's only sent for that family — an older Gemini model (via BYOK or a
+  // manual LLM_MODEL override) wouldn't recognize the field.
+  const isGemini3 = modelName.startsWith("gemini-3");
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: { maxOutputTokens: maxTokens || 1024 },
+      generationConfig: {
+        maxOutputTokens: maxTokens || 1024,
+        ...(isGemini3 ? { thinking_level: "low" } : {}),
+      },
     }),
   });
   if (!res.ok) {
@@ -58,7 +81,16 @@ async function* geminiGenerate({ system, user, model, maxTokens, apiKey }) {
 }
 
 async function* groqGenerate({ system, user, model, maxTokens, apiKey }) {
-  const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || "llama-3.1-8b-instant");
+  const modelName = model && model !== "default" ? model : (process.env.LLM_MODEL || DEFAULT_GROQ_MODEL);
+  // The default gpt-oss models are reasoning models: they spend part of the
+  // token budget on a separate hidden `reasoning` field before ever writing
+  // `content`, and at this app's modest maxTokens (judge calls use 150) the
+  // reasoning alone can exhaust the budget, leaving content empty with
+  // finish_reason "length" — confirmed directly against the live API.
+  // reasoning_effort trims that overhead, but Groq 400s if a non-reasoning
+  // model is sent a reasoning_effort it doesn't support (also confirmed
+  // directly) — so it's only ever sent for the gpt-oss family.
+  const isReasoningModel = modelName.startsWith("openai/gpt-oss");
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -72,6 +104,7 @@ async function* groqGenerate({ system, user, model, maxTokens, apiKey }) {
         { role: "user", content: user },
       ],
       max_tokens: maxTokens || 1024,
+      ...(isReasoningModel ? { reasoning_effort: "low" } : {}),
     }),
   });
   if (!res.ok) {

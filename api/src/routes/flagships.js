@@ -23,26 +23,34 @@ router.post("/cited-researcher/run", handleCitedResearcherRun);
 router.post("/agent-finder/run", handleAgentFinderRun);
 
 // The public, lower-friction "Try it" path for a visitor on the listing
-// page — capped per visitor per day (session-based, same pattern as v1's
-// run limits), and supports an optional bring-your-own-key for that one
-// request only. The key is never written to the session, the DB, or any
-// log — it only ever lives in this request's req.llmOverride.
+// page, and supports an optional bring-your-own-key for that one request
+// only. The key is never written to the session, the DB, or any log — it
+// only ever lives in this request's req.llmOverride.
+//
+// The daily cap only applies when the run uses Agent One's own LLM config
+// — that's the case costing Agent One real money. A visitor supplying
+// their own key pays for (and is responsible for) their own usage, so
+// there's nothing here for the cap to protect; it's skipped entirely.
 router.post("/:slug/try", async (req, res) => {
   const handler = HANDLERS[req.params.slug];
   if (!handler) return res.status(404).json({ error: "Unknown flagship." });
 
-  const today = new Date().toISOString().slice(0, 10);
-  if (req.session.flagshipTryDate !== today) {
-    req.session.flagshipTryCount = 0;
-    req.session.flagshipTryDate = today;
-  }
-  if ((req.session.flagshipTryCount || 0) >= VISITOR_DAILY_TRY_LIMIT) {
-    return res.status(429).json({ error: `You've used all ${VISITOR_DAILY_TRY_LIMIT} free tries today — come back tomorrow.` });
-  }
-  req.session.flagshipTryCount = (req.session.flagshipTryCount || 0) + 1;
-
   const { provider, apiKey } = req.body?.byok || {};
-  if (provider && apiKey) req.llmOverride = { provider, apiKey };
+  const usingOwnKey = Boolean(provider && apiKey);
+
+  if (usingOwnKey) {
+    req.llmOverride = { provider, apiKey };
+  } else {
+    const today = new Date().toISOString().slice(0, 10);
+    if (req.session.flagshipTryDate !== today) {
+      req.session.flagshipTryCount = 0;
+      req.session.flagshipTryDate = today;
+    }
+    if ((req.session.flagshipTryCount || 0) >= VISITOR_DAILY_TRY_LIMIT) {
+      return res.status(429).json({ error: `You've used all ${VISITOR_DAILY_TRY_LIMIT} free tries today — come back tomorrow, or paste your own API key for unlimited tries.` });
+    }
+    req.session.flagshipTryCount = (req.session.flagshipTryCount || 0) + 1;
+  }
 
   return handler(req, res);
 });

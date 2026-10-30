@@ -23,6 +23,7 @@ import ogRoutes from "./routes/og.js";
 import shareRoutes from "./routes/share.js";
 import mcpRoutes from "./routes/mcp.js";
 import ciRoutes from "./routes/ci.js";
+import directoryRoutes from "./routes/directory.js";
 import authRoutes from "./routes/auth.js";
 import statsRoutes from "./routes/stats.js";
 import devAuthRoutes from "./auth/devAuth.js";
@@ -77,6 +78,10 @@ app.use("/api/mcp", cors(), mcpRoutes);
 // has no browser session.
 app.use("/api/ci", ciRoutes);
 app.use("/api/tasks", tasksRoutes);
+// The "wide" community directory (100+ tools, batched) — a separate
+// collection from Listing/the eval harness, never read by any Listing-
+// backed page (Home, Leaderboard, Agent Finder, the MCP server).
+app.use("/api/directory", directoryRoutes);
 app.use("/api/flagships", flagshipsRoutes);
 app.use("/api/me", authRoutes);
 app.use("/api/stats", statsRoutes);
