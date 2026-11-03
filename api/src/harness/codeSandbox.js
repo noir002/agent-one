@@ -1,5 +1,6 @@
 import { spawn, execFile } from "node:child_process";
 import crypto from "node:crypto";
+import { ensureEgressNetwork } from "./egressProxy.js";
 
 const execFileAsync = (cmd, args) => new Promise((resolve) => {
   execFile(cmd, args, (error, stdout, stderr) => resolve({ error, stdout, stderr }));
@@ -75,9 +76,28 @@ export async function runInContainer({
   return { stdout, stderr, exitCode, timedOut };
 }
 
-export async function buildImageFromDockerfile(buildContextDir, tag) {
+// `network`, when given, names an egressProxy.js profile — the build runs
+// on that profile's no-route-out internal network, reachable only through
+// its allowlisting squid proxy. Without it, the build gets Docker's normal
+// unrestricted bridge network; every caller that builds from third-party
+// (not-yet-fully-trusted) source should pass one. The proxy build-args are
+// a convenience for well-behaved tooling (pip/npm honor them) — the real
+// boundary is the internal network having nowhere else to route to.
+export async function buildImageFromDockerfile(buildContextDir, tag, { network } = {}) {
+  const args = ["build"];
+  if (network) {
+    const { network: dockerNetwork, proxyHost, proxyPort } = await ensureEgressNetwork(network);
+    const proxyUrl = `http://${proxyHost}:${proxyPort}`;
+    args.push(
+      "--network", dockerNetwork,
+      "--build-arg", `HTTP_PROXY=${proxyUrl}`, "--build-arg", `HTTPS_PROXY=${proxyUrl}`,
+      "--build-arg", `http_proxy=${proxyUrl}`, "--build-arg", `https_proxy=${proxyUrl}`,
+    );
+  }
+  args.push("-t", tag, buildContextDir);
+
   return new Promise((resolve, reject) => {
-    const child = spawn("docker", ["build", "-t", tag, buildContextDir]);
+    const child = spawn("docker", args);
     let stderr = "";
     child.stderr.on("data", (d) => { stderr += d.toString(); });
     child.on("close", (code) => {

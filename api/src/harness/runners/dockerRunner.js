@@ -39,7 +39,12 @@ async function ensureImage(manifest) {
   }
   const tag = `agentone-docker-agent-${crypto.randomBytes(6).toString("hex")}`;
   const buildContext = endpoint.startsWith("file://") ? endpoint.slice("file://".length) : endpoint;
-  await buildImageFromDockerfile(buildContext, tag); // docker build accepts a git URL as context directly
+  // "build-registries": the build gets just enough network (via an
+  // allowlisting proxy on a no-route-out internal network) for
+  // pip/npm/apt to fetch dependencies — not open internet. Closes a real
+  // gap: an untrusted Dockerfile's RUN steps used to have unrestricted
+  // network access during build, before --network none ever applied.
+  await buildImageFromDockerfile(buildContext, tag, { network: "build-registries" }); // docker build accepts a git URL as context directly
   buildCache.set(endpoint, tag);
   return tag;
 }
