@@ -2,11 +2,27 @@ const TIMEOUT_MS = 10000;
 const SECURITY_HEADERS = ["strict-transport-security", "content-security-policy", "x-content-type-options", "x-frame-options"];
 const PRIVACY_PATHS = ["/privacy", "/privacy-policy", "/legal/privacy"];
 
+// Node's default fetch sends no User-Agent at all, which some sites'
+// anti-bot protection blocks outright (confirmed on a few in this batch) —
+// that's a request-identification issue, not a real HTTPS/security
+// problem, and shouldn't be mislabeled as one (see httpsValid below). The
+// fix is to identify this checker honestly, like any legitimate crawler
+// (Googlebot, etc.) does — never a browser's own User-Agent, which would
+// be impersonation. A site that blocks an honestly-identified bot is a
+// real, if imperfect, data point (same as any automated checker hits), not
+// something to work around by pretending to be something else.
+const USER_AGENT = "AgentOne-DirectoryHygieneCheck/1.0 (+https://github.com/noir002/agent-one; automated public security-signal check, not a crawler)";
+
 async function fetchWithTimeout(url, opts = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    return await fetch(url, { signal: controller.signal, redirect: "follow", ...opts });
+    return await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      ...opts,
+      headers: { "User-Agent": USER_AGENT, ...opts.headers },
+    });
   } finally {
     clearTimeout(timeout);
   }
@@ -86,13 +102,27 @@ export async function checkDirectoryToolSecurity(tool) {
     repoLicense: "",
   };
 
-  try {
-    const res = await fetchWithTimeout(tool.sourceUrl, { method: "GET" });
-    result.httpsValid = tool.sourceUrl.startsWith("https://") && res.ok;
-    result.securityHeadersFound = SECURITY_HEADERS.filter((h) => res.headers.has(h)).length;
-  } catch {
-    result.httpsValid = false;
-    result.securityHeadersFound = 0;
+  // One retry on a thrown fetch — confirmed directly that a few sites
+  // (canva.com, gamma.app, notebooklm.google.com) transiently fail under a
+  // tight sequential loop of 25 checks but succeed cleanly in isolation;
+  // recording that as "HTTPS broken" would be a flaky false negative, not
+  // a real finding.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(tool.sourceUrl, { method: "GET" });
+      // httpsValid means the TLS connection itself succeeded — deliberately
+      // independent of the HTTP status code. A 403 from anti-bot protection
+      // (common on major sites) still proves HTTPS works; conflating the
+      // two would mislabel well-secured sites as broken.
+      result.httpsValid = tool.sourceUrl.startsWith("https://");
+      result.securityHeadersFound = SECURITY_HEADERS.filter((h) => res.headers.has(h)).length;
+      break;
+    } catch {
+      if (attempt === 2) {
+        result.httpsValid = false;
+        result.securityHeadersFound = 0;
+      }
+    }
   }
 
   result.privacyPolicyFound = await checkPrivacyPolicy(tool.sourceUrl);
