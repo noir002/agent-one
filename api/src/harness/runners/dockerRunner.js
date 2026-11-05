@@ -4,6 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { runInContainer, buildImageFromDockerfile } from "../codeSandbox.js";
 import { getActiveTaskContent } from "../taskVariant.js";
+import { ensureEgressNetwork } from "../egressProxy.js";
 
 // Agent One's own "docker task contract" — there's no existing standard for
 // this the way there is for http/mcp. The container reads /task/input.json
@@ -230,6 +231,29 @@ function writeGeneratedBuildContext(repoUrl, runtimeConfig) {
   fs.writeFileSync(path.join(dir, "runtime_config.json"), JSON.stringify({ entryCommand, inputMode, outputMode }));
 
   return dir;
+}
+
+// Wires manifest.permissions.network (schema field existed since Phase 2,
+// read by nothing until now) into the actual sandbox boundary. "none"
+// (default) changes nothing for any existing listing. "allowlist" joins
+// the same --internal/no-route-out network + squid topology egressProxy.js
+// already uses for builds — the proxy env vars are a convenience for
+// well-behaved HTTP clients (most SDKs honor them); a client that ignores
+// them simply has nowhere to route to, since the network itself has no
+// path to the internet. "open" is deliberately never implemented — kept
+// in the schema only as a documented non-capability.
+async function resolveRuntimeNetwork(manifest) {
+  const permission = manifest.permissions?.network || "none";
+  if (permission === "none") return { network: "none", env: {} };
+  if (permission === "open") {
+    throw new Error('manifest.permissions.network "open" is not a supported capability — only "none" or "allowlist" are implemented.');
+  }
+  const { network, proxyHost, proxyPort } = await ensureEgressNetwork("llm-providers");
+  const proxyUrl = `http://${proxyHost}:${proxyPort}`;
+  return {
+    network,
+    env: { HTTP_PROXY: proxyUrl, HTTPS_PROXY: proxyUrl, http_proxy: proxyUrl, https_proxy: proxyUrl },
+  };
 }
 
 async function ensureImage(manifest) {
