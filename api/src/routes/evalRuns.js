@@ -24,6 +24,41 @@ function hasVerificationPro(user) {
   return Boolean(user) && (user.role === "admin" || user.plan === "verification_pro");
 }
 
+// Shared by POST /listings/:slug/evaluate-private (below) and
+// routes/repoSubmissions.js (Phase C) — one implementation of the
+// credit-gated, no-cooldown private-run trigger instead of duplicating the
+// gate. `repoSubmissionId`, when given, is threaded onto the EvalRun so
+// executeEvalRun() knows to decrypt and inject that submission's
+// credentials (see harness/runEvalRun.js) — omitted entirely for a normal
+// owner-triggered private run.
+export async function createPrivateEvalRun(listing, manifest, user, { repoSubmissionId } = {}) {
+  if (user.role !== "admin" && (user.credits || 0) < 1) {
+    const err = new Error("This requires at least 1 credit. Credits are granted by an admin for now (no live payments yet).");
+    err.statusCode = 402;
+    throw err;
+  }
+
+  if (user.role !== "admin") {
+    user.credits -= 1;
+    await user.save();
+  }
+
+  const evalRun = await EvalRun.create({
+    listingId: listing._id,
+    manifestId: manifest._id,
+    manifestVersion: manifest.version,
+    triggeredBy: user._id,
+    triggerSource: "manual",
+    isPrivate: true,
+    status: "queued",
+    ...(repoSubmissionId ? { repoSubmissionId } : {}),
+  });
+
+  await enqueueEvalRun(evalRun._id);
+
+  return evalRun;
+}
+
 // Owner connects (or updates) their agentone.yaml. The HLD requires a fresh
 // run on every version bump — this is that trigger. A listing needs a
 // manifest before it's eligible for L2 at all (tier only advances once
@@ -139,29 +174,17 @@ router.post("/listings/:slug/evaluate-private", async (req, res) => {
   if (!listing.manifestId) {
     return res.status(409).json({ error: "This listing has no connected manifest yet." });
   }
-  if (req.user.role !== "admin" && (req.user.credits || 0) < 1) {
-    return res.status(402).json({ error: "This requires at least 1 credit. Credits are granted by an admin for now (no live payments yet)." });
-  }
 
   const manifest = await Manifest.findById(listing.manifestId);
   if (!manifest) return res.status(409).json({ error: "Manifest record is missing." });
 
-  if (req.user.role !== "admin") {
-    req.user.credits -= 1;
-    await req.user.save();
+  let evalRun;
+  try {
+    evalRun = await createPrivateEvalRun(listing, manifest, req.user);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    throw err;
   }
-
-  const evalRun = await EvalRun.create({
-    listingId: listing._id,
-    manifestId: manifest._id,
-    manifestVersion: manifest.version,
-    triggeredBy: req.user._id,
-    triggerSource: "manual",
-    isPrivate: true,
-    status: "queued",
-  });
-
-  await enqueueEvalRun(evalRun._id);
 
   res.status(202).json({ evalRun, creditsRemaining: req.user.credits });
 });

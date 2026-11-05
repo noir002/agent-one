@@ -20,8 +20,15 @@ const manifestSchema = new mongoose.Schema({
   interface: {
     type: { type: String, enum: INTERFACE_TYPES, required: true },
     endpoint: { type: String, default: "" },
-    auth: { type: String, default: "" }, // the scheme name only; the real token is on Claim, encrypted
+    auth: { type: String, default: "" }, // the scheme name only — no credential is ever stored on a Manifest
     streaming: { type: String, default: "" },
+    // "direct" (default): endpoint IS the Docker build context, today's
+    // only behavior for owner-authored manifests. "generated": a
+    // self-service fast-path submission — endpoint is just a repo URL,
+    // and dockerRunner.js's ensureImage() generates a wrapper Dockerfile +
+    // shim (from runtimeConfig) that clones it internally.
+    buildMode: { type: String, enum: ["direct", "generated"], default: "direct" },
+    runtimeConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
 
   model: { type: [String], default: ["any"] },

@@ -25,6 +25,7 @@ export async function runInContainer({
   memoryMb = 256,
   cpus = 1,
   network = "none", // never pass anything else for untrusted code
+  env = {}, // decrypted repo-submission credentials only — never baked into an image layer
 }) {
   const containerName = `agentone-sandbox-${crypto.randomBytes(6).toString("hex")}`;
 
@@ -41,6 +42,14 @@ export async function runInContainer({
   ];
   for (const m of mounts) {
     args.push("-v", `${m.hostPath}:${m.containerPath}${m.readOnly ? ":ro" : ""}`);
+  }
+  // Each -e/value pair is its own argv entry (spawn, no shell) — a
+  // credential value can contain anything without risk of argument/flag
+  // injection. Key names are still sanity-checked since they're also a
+  // user-controlled string, just more cosmetic than a real injection risk.
+  for (const [key, value] of Object.entries(env)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    args.push("-e", `${key}=${value}`);
   }
   args.push(image, ...command);
 

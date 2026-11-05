@@ -12,44 +12,240 @@ import { getActiveTaskContent } from "../taskVariant.js";
 // shape httpRunner/mcpRunner produce, so grading never needs to know which
 // runner ran.
 //
-// Builds are cached per manifest endpoint for the process lifetime — one
-// EvalRun's many task runs (3x per task) should build the image once, not
-// once per task run.
+// Builds are cached per (endpoint, buildMode, runtimeConfig) for the process
+// lifetime — one EvalRun's many task runs (3x per task) should build the
+// image once, not once per task run. Keying on endpoint alone (pre-Phase C)
+// would wrongly share a cached image between two fast-path submissions of
+// the same repo with different runtimeConfig.
 const buildCache = new Map();
+
+function buildCacheKey(manifest) {
+  const { endpoint, buildMode = "direct", runtimeConfig = {} } = manifest.interface;
+  return crypto.createHash("sha256").update(JSON.stringify({ endpoint, buildMode, runtimeConfig })).digest("hex");
+}
 
 // Restricting build sources is a real (if partial) SSRF/supply-chain
 // mitigation: only a real GitHub repo, or — for local fixture testing only —
 // a file:// path gated behind the same dev-only flag safeFetch uses for
 // loopback endpoints. A malicious Dockerfile can still try to exfiltrate
 // during the build step itself (before --network none applies at run time);
-// documented in the Phase 4 plan as a real follow-up, not solved here.
+// mitigated by the egressProxy.js "build-registries" allowlist, not solved
+// outright.
 function isAllowedBuildSource(endpoint) {
   if (endpoint.startsWith("https://github.com/")) return true;
   if (endpoint.startsWith("file://") && process.env.ALLOW_LOOPBACK_ENDPOINTS === "true") return true;
   return false;
 }
 
-async function ensureImage(manifest) {
-  const endpoint = manifest.interface.endpoint;
-  if (buildCache.has(endpoint)) return buildCache.get(endpoint);
-  if (!isAllowedBuildSource(endpoint)) {
-    throw new Error(
-      `Docker build source must be https://github.com/... (or file:// with ALLOW_LOOPBACK_ENDPOINTS=true for local testing): ${endpoint}`
-    );
+// Strict on purpose: this string gets interpolated into a generated
+// Dockerfile's `git clone` line (buildMode "generated"). Only a bare
+// https://github.com/<owner>/<repo>(.git)? is accepted — no shell
+// metacharacters, no query strings, no other host, so there's no way for
+// a submitted URL to break out of that single RUN instruction.
+export function isValidGithubRepoUrl(url) {
+  return typeof url === "string" && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(\.git)?\/?$/.test(url);
+}
+
+// Fast-path commands are free-form shell (the whole point is running
+// whatever install/entry command the user's own repo needs), so metacharacters
+// are allowed — the only hard requirement is staying on one line, since a
+// literal newline would let the string spill into a second Dockerfile
+// instruction.
+function isValidShellCommandLine(cmd) {
+  return typeof cmd === "string" && cmd.length > 0 && cmd.length <= 1000 && !/[\r\n]/.test(cmd);
+}
+
+const RUNTIME_PRESETS = {
+  python: {
+    baseImage: "python:3.12-slim",
+    shimFilename: "shim.py",
+    entrypoint: ["python3", "/app/shim.py"],
+    shimContent: `import json, os, subprocess
+
+def main():
+    with open("/task/input.json") as f:
+        task = json.load(f)
+    input_text = task.get("input", "")
+
+    with open("/app/runtime_config.json") as f:
+        config = json.load(f)
+    input_mode = config.get("inputMode", "stdin")
+    output_mode = config.get("outputMode", "stdout")
+    entry_command = config.get("entryCommand", "")
+
+    env = os.environ.copy()
+    stdin_data = None
+
+    if input_mode == "stdin":
+        stdin_data = input_text
+    elif input_mode == "file":
+        with open("/tmp/agentone_input.txt", "w") as f:
+            f.write(input_text)
+        env["AGENTONE_INPUT_FILE"] = "/tmp/agentone_input.txt"
+    elif input_mode == "env_var":
+        env["AGENTONE_INPUT"] = input_text
+
+    if output_mode == "file":
+        env["AGENTONE_OUTPUT_FILE"] = "/tmp/agentone_output.txt"
+
+    result = subprocess.run(
+        entry_command, shell=True, cwd="/app/repo",
+        input=stdin_data, capture_output=True, text=True, env=env, timeout=250,
+    )
+
+    output = result.stdout
+    if output_mode == "file" and os.path.exists("/tmp/agentone_output.txt"):
+        with open("/tmp/agentone_output.txt") as f:
+            output = f.read()
+
+    with open("/task/output.json", "w") as f:
+        json.dump({"output": output, "tokens": 0, "cost_usd": 0}, f)
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+  node: {
+    baseImage: "node:20-slim",
+    shimFilename: "shim.js",
+    entrypoint: ["node", "/app/shim.js"],
+    shimContent: `const fs = require("fs");
+const { execSync } = require("child_process");
+
+function main() {
+  const task = JSON.parse(fs.readFileSync("/task/input.json", "utf-8"));
+  const inputText = task.input || "";
+
+  const config = JSON.parse(fs.readFileSync("/app/runtime_config.json", "utf-8"));
+  const inputMode = config.inputMode || "stdin";
+  const outputMode = config.outputMode || "stdout";
+  const entryCommand = config.entryCommand || "";
+
+  const env = { ...process.env };
+  let stdinData;
+
+  if (inputMode === "stdin") {
+    stdinData = inputText;
+  } else if (inputMode === "file") {
+    fs.writeFileSync("/tmp/agentone_input.txt", inputText);
+    env.AGENTONE_INPUT_FILE = "/tmp/agentone_input.txt";
+  } else if (inputMode === "env_var") {
+    env.AGENTONE_INPUT = inputText;
   }
+
+  if (outputMode === "file") {
+    env.AGENTONE_OUTPUT_FILE = "/tmp/agentone_output.txt";
+  }
+
+  let stdout = "";
+  try {
+    stdout = execSync(entryCommand, {
+      cwd: "/app/repo", input: stdinData, env, timeout: 250000, encoding: "utf-8",
+    });
+  } catch (err) {
+    stdout = err.stdout ? err.stdout.toString() : "";
+  }
+
+  let output = stdout;
+  if (outputMode === "file" && fs.existsSync("/tmp/agentone_output.txt")) {
+    output = fs.readFileSync("/tmp/agentone_output.txt", "utf-8");
+  }
+
+  fs.writeFileSync("/task/output.json", JSON.stringify({ output, tokens: 0, cost_usd: 0 }));
+}
+
+main();
+`,
+  },
+};
+
+// Builds the throwaway context dir for a "generated" (fast-path) build: a
+// Dockerfile that clones the validated repo URL internally, the install
+// command the user gave, and a shim that bridges Agent One's
+// input.json/output.json contract to the user's own entry command.
+// entryCommand/inputMode/outputMode are baked into the image via
+// runtime_config.json (part of the cache key already) — credentials are
+// never written here; those are injected at `docker run` time via
+// runInContainer's `env` param instead, so they never land in an image layer.
+function writeGeneratedBuildContext(repoUrl, runtimeConfig) {
+  if (!isValidGithubRepoUrl(repoUrl)) {
+    throw new Error(`Fast-path repo URL must be https://github.com/<owner>/<repo>: ${repoUrl}`);
+  }
+  const { runtime, installCommand = "", entryCommand, inputMode = "stdin", outputMode = "stdout" } = runtimeConfig || {};
+  const preset = RUNTIME_PRESETS[runtime];
+  if (!preset) {
+    throw new Error(`Unsupported fast-path runtime "${runtime}" — must be one of: ${Object.keys(RUNTIME_PRESETS).join(", ")}.`);
+  }
+  if (installCommand && !isValidShellCommandLine(installCommand)) {
+    throw new Error("installCommand must be a single line (no newlines) under 1000 characters.");
+  }
+  if (!isValidShellCommandLine(entryCommand)) {
+    throw new Error("entryCommand is required and must be a single line (no newlines) under 1000 characters.");
+  }
+  if (!["stdin", "file", "env_var"].includes(inputMode)) {
+    throw new Error(`inputMode must be one of: stdin, file, env_var.`);
+  }
+  if (!["stdout", "file"].includes(outputMode)) {
+    throw new Error(`outputMode must be one of: stdout, file.`);
+  }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agentone-generated-build-"));
+
+  const dockerfileLines = [
+    `FROM ${preset.baseImage}`,
+    `RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*`,
+    `WORKDIR /app`,
+    `RUN git clone --depth 1 ${repoUrl} repo`,
+    `WORKDIR /app/repo`,
+  ];
+  if (installCommand) dockerfileLines.push(`RUN ${installCommand}`);
+  dockerfileLines.push(
+    `COPY ${preset.shimFilename} /app/${preset.shimFilename}`,
+    `COPY runtime_config.json /app/runtime_config.json`,
+    `ENTRYPOINT ${JSON.stringify(preset.entrypoint)}`,
+  );
+
+  fs.writeFileSync(path.join(dir, "Dockerfile"), dockerfileLines.join("\n") + "\n");
+  fs.writeFileSync(path.join(dir, preset.shimFilename), preset.shimContent);
+  fs.writeFileSync(path.join(dir, "runtime_config.json"), JSON.stringify({ entryCommand, inputMode, outputMode }));
+
+  return dir;
+}
+
+async function ensureImage(manifest) {
+  const cacheKey = buildCacheKey(manifest);
+  if (buildCache.has(cacheKey)) return buildCache.get(cacheKey);
+
+  const { endpoint, buildMode = "direct", runtimeConfig = {} } = manifest.interface;
   const tag = `agentone-docker-agent-${crypto.randomBytes(6).toString("hex")}`;
-  const buildContext = endpoint.startsWith("file://") ? endpoint.slice("file://".length) : endpoint;
-  // "build-registries": the build gets just enough network (via an
-  // allowlisting proxy on a no-route-out internal network) for
-  // pip/npm/apt to fetch dependencies — not open internet. Closes a real
-  // gap: an untrusted Dockerfile's RUN steps used to have unrestricted
-  // network access during build, before --network none ever applied.
-  await buildImageFromDockerfile(buildContext, tag, { network: "build-registries" }); // docker build accepts a git URL as context directly
-  buildCache.set(endpoint, tag);
+
+  if (buildMode === "generated") {
+    const buildContextDir = writeGeneratedBuildContext(endpoint, runtimeConfig);
+    try {
+      await buildImageFromDockerfile(buildContextDir, tag, { network: "build-registries" });
+    } finally {
+      fs.rmSync(buildContextDir, { recursive: true, force: true });
+    }
+  } else {
+    if (!isAllowedBuildSource(endpoint)) {
+      throw new Error(
+        `Docker build source must be https://github.com/... (or file:// with ALLOW_LOOPBACK_ENDPOINTS=true for local testing): ${endpoint}`
+      );
+    }
+    const buildContext = endpoint.startsWith("file://") ? endpoint.slice("file://".length) : endpoint;
+    // "build-registries": the build gets just enough network (via an
+    // allowlisting proxy on a no-route-out internal network) for
+    // pip/npm/apt to fetch dependencies — not open internet. Closes a real
+    // gap: an untrusted Dockerfile's RUN steps used to have unrestricted
+    // network access during build, before --network none ever applied.
+    await buildImageFromDockerfile(buildContext, tag, { network: "build-registries" }); // docker build accepts a git URL as context directly
+  }
+
+  buildCache.set(cacheKey, tag);
   return tag;
 }
 
-export async function runDockerTask({ manifest, task }) {
+export async function runDockerTask({ manifest, task, envOverrides = {} }) {
   const started = Date.now();
   const { input, fixtures } = getActiveTaskContent(task);
   const events = [];
@@ -68,6 +264,7 @@ export async function runDockerTask({ manifest, task }) {
       command: [],
       mounts: [{ hostPath: tmpDir, containerPath: "/task", readOnly: false }],
       timeoutS: task.budget?.timeoutS || 60,
+      env: envOverrides, // decrypted repo-submission credentials, if any — see runEvalRun.js
     });
 
     for (const line of result.stdout.split("\n").filter(Boolean)) {
