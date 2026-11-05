@@ -86,8 +86,10 @@ async function main() {
   const taskRuns = await TaskRun.find({ evalRunId: evalRun._id }).limit(1);
   console.log("[verify] RepoSubmission.encryptedCredentials after run (should be null):", finalSubmission.encryptedCredentials);
   if (taskRuns.length) {
-    console.log("[verify] sample finalOutput (expect REPO:Hello World!|INPUT:<task input>|CRED:fastpath-cred-ok):");
-    console.log("  ", taskRuns[0].finalOutput);
+    console.log("[verify] outcome:", taskRuns[0].outcome);
+    console.log("[verify] errorMessage:", taskRuns[0].errorMessage);
+    console.log("[verify] finalOutput:", JSON.stringify(taskRuns[0].finalOutput));
+    console.log("[verify] events:", JSON.stringify(taskRuns[0].events, null, 2));
   } else {
     console.log("[verify] no TaskRuns were created — build or run likely failed before any task ran.");
   }
