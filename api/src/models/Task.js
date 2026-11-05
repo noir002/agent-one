@@ -10,7 +10,11 @@ const variantSchema = new mongoose.Schema({
 // catalogue is a much larger content-authoring effort, deliberately scoped
 // down the same way the listing catalogue was (see README).
 const taskSchema = new mongoose.Schema({
-  category: { type: String, enum: ["code", "research"], required: true },
+  // "general": deterministic-only smoke-test tasks for self-service repo
+  // submissions (api/seed/seedGeneralTasks.js) — a separate, narrower
+  // enum from shared CATEGORIES on purpose; widen it here only when a
+  // real task suite backs the new category.
+  category: { type: String, enum: ["code", "research", "general"], required: true },
   title: { type: String, required: true },
   input: { type: String, required: true },
   fixtures: { type: mongoose.Schema.Types.Mixed, default: {} },

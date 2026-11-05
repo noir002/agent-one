@@ -19,7 +19,11 @@ export const TIER_COLORS = {
   L3: "#F0EBFF",
 };
 
-export const CATEGORIES = ["code", "research", "data", "browser", "support"];
+// "general" backs self-service repo-submission smoke tests (sandbox
+// testing a freshly-uploaded agent, not yet a public listing category) —
+// excluded from the public category browse/leaderboard filters until
+// there's a real cohort of promoted listings in it.
+export const CATEGORIES = ["code", "research", "data", "browser", "support", "general"];
 
 export const CATEGORY_LABELS = {
   code: "Code",
@@ -27,6 +31,7 @@ export const CATEGORY_LABELS = {
   data: "Data",
   browser: "Browser",
   support: "Support",
+  general: "General",
 };
 
 export const LISTING_TYPES = ["agent", "tool", "prompt"];

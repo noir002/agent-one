@@ -1,0 +1,62 @@
+[
+  {
+    "category": "general",
+    "title": "Respond with a non-empty answer",
+    "input": "Reply with any short sentence confirming you received this message.",
+    "toolsAllowed": [],
+    "checks": [{ "type": "value_matches", "value": { "pattern": "\\S", "flags": "" } }],
+    "budget": { "maxSteps": 5, "maxCostUsd": 0.05, "timeoutS": 30 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  },
+  {
+    "category": "general",
+    "title": "Basic arithmetic",
+    "input": "What is 7 plus 5? Reply with just the number.",
+    "toolsAllowed": [],
+    "checks": [{ "type": "output_contains", "value": ["12"] }],
+    "budget": { "maxSteps": 5, "maxCostUsd": 0.05, "timeoutS": 30 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  },
+  {
+    "category": "general",
+    "title": "Echo an exact string",
+    "input": "Reply with exactly this text and nothing else: AGENTONE_SMOKE_TEST_OK",
+    "toolsAllowed": [],
+    "checks": [{ "type": "output_contains", "value": ["AGENTONE_SMOKE_TEST_OK"] }],
+    "budget": { "maxSteps": 5, "maxCostUsd": 0.05, "timeoutS": 30 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  },
+  {
+    "category": "general",
+    "title": "Follow a JSON output format",
+    "input": "Reply with valid JSON only, in exactly this shape: {\"status\": \"ok\"} — no extra text before or after it.",
+    "toolsAllowed": [],
+    "checks": [{ "type": "value_matches", "value": { "pattern": "\\{\\s*\"status\"\\s*:\\s*\"ok\"\\s*\\}", "flags": "i" } }],
+    "budget": { "maxSteps": 5, "maxCostUsd": 0.05, "timeoutS": 30 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  },
+  {
+    "category": "general",
+    "title": "Avoid a forbidden word",
+    "input": "Describe what a cat is in one sentence, but do not use the word \"animal\" anywhere in your reply.",
+    "toolsAllowed": [],
+    "checks": [{ "type": "output_not_contains", "value": ["animal"] }],
+    "budget": { "maxSteps": 5, "maxCostUsd": 0.05, "timeoutS": 30 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  },
+  {
+    "category": "general",
+    "title": "Stay within a tight budget",
+    "input": "Reply with the single word: done",
+    "toolsAllowed": [],
+    "checks": [{ "type": "output_contains", "value": ["done"] }],
+    "budget": { "maxSteps": 3, "maxCostUsd": 0.02, "timeoutS": 15 },
+    "isPublicSample": false,
+    "isSafetyTask": false
+  }
+]
