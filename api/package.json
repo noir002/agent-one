@@ -8,6 +8,7 @@
     "start": "node src/app.js",
     "seed": "node seed/seed.js",
     "seed:tasks": "node seed/seedTasks.js",
+    "seed:generalTasks": "node seed/seedGeneralTasks.js",
     "seed:flagships": "node seed/seedFlagships.js",
     "seed:directory": "node scripts/seedDirectoryTools.js",
     "directory:check-security": "node scripts/checkDirectoryToolSecurity.js",

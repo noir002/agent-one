@@ -4,6 +4,8 @@ import Task from "../models/Task.js";
 import Listing from "../models/Listing.js";
 import Manifest from "../models/Manifest.js";
 import ScoreSnapshot from "../models/ScoreSnapshot.js";
+import RepoSubmission from "../models/RepoSubmission.js";
+import { decrypt } from "../services/secretCrypto.js";
 import { getRunner } from "./runners/index.js";
 import { runDeterministicChecks } from "./grading/deterministic.js";
 import { runJudge } from "./grading/judge.js";
@@ -11,9 +13,14 @@ import { computeEvalRunScore } from "./scoring.js";
 
 const RUNS_PER_TASK = 3;
 
-async function runOneTask(evalRunId, manifest, task, runIndex) {
+async function runOneTask(evalRunId, manifest, task, runIndex, envOverrides) {
   const runner = getRunner(manifest.interface.type);
-  const result = await runner({ manifest, task });
+  // envOverrides is only ever non-empty for a repo-submission run; http/
+  // mcp/a2a runners destructure just {manifest, task} and ignore it.
+  // dockerRunner.js doesn't act on it yet either — wiring it into the
+  // actual `docker run -e` injection is Phase C, once the fast-path shim
+  // exists to consume it.
+  const result = await runner({ manifest, task, envOverrides });
 
   let outcome = result.outcome === "error" ? "error" : "fail";
   let deterministicResult = null;
@@ -56,6 +63,22 @@ export async function executeEvalRun(evalRunId) {
   evalRun.startedAt = new Date();
   await evalRun.save();
 
+  // Loaded (and its credential blob decrypted) once up front, outside the
+  // try below, so it's in scope for the `finally` no matter where this
+  // run fails. Every non-repo-submission EvalRun leaves repoSubmissionId
+  // null and this whole block is skipped.
+  let repoSubmission = null;
+  let envOverrides = {};
+  if (evalRun.repoSubmissionId) {
+    repoSubmission = await RepoSubmission.findById(evalRun.repoSubmissionId);
+    // The encrypted blob is a JSON string of { ENV_VAR_NAME: "value" }
+    // pairs — the shape Phase C's docker shim expects to inject via
+    // `docker run -e`.
+    if (repoSubmission?.encryptedCredentials) {
+      envOverrides = JSON.parse(decrypt(repoSubmission.encryptedCredentials));
+    }
+  }
+
   try {
     const manifest = await Manifest.findById(evalRun.manifestId);
     if (!manifest) throw new Error("Manifest not found.");
@@ -68,7 +91,7 @@ export async function executeEvalRun(evalRunId) {
     const allTaskRuns = [];
     for (const task of tasks) {
       for (let runIndex = 1; runIndex <= RUNS_PER_TASK; runIndex++) {
-        const taskRun = await runOneTask(evalRun._id, manifest, task, runIndex);
+        const taskRun = await runOneTask(evalRun._id, manifest, task, runIndex, envOverrides);
         allTaskRuns.push(taskRun);
       }
     }
@@ -112,5 +135,15 @@ export async function executeEvalRun(evalRunId) {
     evalRun.completedAt = new Date();
     await evalRun.save();
     throw err;
+  } finally {
+    // Held just long enough to get from submission to this one sandbox
+    // run — never "saved". Runs whether the try block returned or threw,
+    // so a credential is never left sitting encrypted-at-rest just
+    // because the run itself failed.
+    if (repoSubmission) {
+      repoSubmission.encryptedCredentials = null;
+      repoSubmission.status = evalRun.status === "done" ? "done" : "failed";
+      await repoSubmission.save();
+    }
   }
 }

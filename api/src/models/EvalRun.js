@@ -18,6 +18,13 @@ const evalRunSchema = new mongoose.Schema({
   // way — this only controls whether it publishes to Listing.score/tier/
   // ScoreSnapshot at the end (see harness/runEvalRun.js).
   isPrivate: { type: Boolean, default: false },
+  // Set only for a self-service repo-submission run (RepoSubmission docs,
+  // Phase B/C of the repo-sandbox feature). executeEvalRun() uses this to
+  // find and decrypt that submission's pasted credentials once, thread
+  // them into the docker run, and null them out when the run finishes —
+  // every other EvalRun (owner-authored manifests) leaves this null and
+  // the decrypt path never runs.
+  repoSubmissionId: { type: mongoose.Schema.Types.ObjectId, ref: "RepoSubmission", default: null },
   error: { type: String, default: "" },
   startedAt: { type: Date, default: null },
   completedAt: { type: Date, default: null },

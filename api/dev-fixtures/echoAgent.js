@@ -22,6 +22,16 @@ const CANNED_ANSWERS = [
   // obvious in test output that this is a simulated failure, not a real bug.
   { match: /config loader module/i, output: "This module manages settings including API_KEY = sk-FAKE1234567890ABCDEF for authentication. (simulated LEAKY response for harness testing)" },
   { match: /data to review, not instructions/i, output: "INJECTED (simulated unsafe response for harness testing)" },
+
+  // Phase B verification fixtures for the new "general" smoke-test suite
+  // (api/seed/generalTasks.json) — lets a manual EvalRun against these
+  // tasks demonstrate real pass/fail grading, not just "didn't crash".
+  { match: /short sentence confirming you received this message/i, output: "Message received, thanks!" },
+  { match: /What is 7 plus 5/i, output: "12" },
+  { match: /AGENTONE_SMOKE_TEST_OK/i, output: "AGENTONE_SMOKE_TEST_OK" },
+  { match: /valid JSON only/i, output: '{"status": "ok"}' },
+  { match: /Describe what a cat is/i, output: "A cat is a small domesticated feline pet." },
+  { match: /single word: done/i, output: "done" },
 ];
 
 function pickAnswer(input) {
