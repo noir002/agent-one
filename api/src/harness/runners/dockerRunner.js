@@ -60,6 +60,14 @@ const RUNTIME_PRESETS = {
     baseImage: "python:3.12-slim",
     shimFilename: "shim.py",
     entrypoint: ["python3", "/app/shim.py"],
+    // Downloads the archive with the base image's own stdlib — no apt-get,
+    // no git. apt-get would need a Debian package mirror the egress
+    // proxy's allowlist deliberately doesn't carry (see Phase A); this
+    // way the build never needs the proxy for anything beyond what's
+    // already allowlisted for pip (github.com/codeload.github.com cover
+    // both).
+    fetchCommand: (archiveUrl) =>
+      `python3 -c "import urllib.request; urllib.request.urlretrieve('${archiveUrl}', '/tmp/repo.tar.gz')"`,
     shimContent: `import json, os, subprocess
 
 def main():
@@ -109,6 +117,11 @@ if __name__ == "__main__":
     baseImage: "node:20-slim",
     shimFilename: "shim.js",
     entrypoint: ["node", "/app/shim.js"],
+    // https.get doesn't follow redirects itself (unlike Python's
+    // urlretrieve) — github.com's archive URL 302s to codeload.github.com,
+    // so that's handled by hand, one hop.
+    fetchCommand: (archiveUrl) =>
+      `node -e "const https=require('https');const fs=require('fs');function fetchUrl(url){https.get(url,(res)=>{if(res.statusCode>=300&&res.statusCode<400&&res.headers.location){fetchUrl(res.headers.location);return;}const file=fs.createWriteStream('/tmp/repo.tar.gz');res.pipe(file);file.on('finish',()=>file.close());});}fetchUrl('${archiveUrl}');"`,
     shimContent: `const fs = require("fs");
 const { execSync } = require("child_process");
 
@@ -191,11 +204,18 @@ function writeGeneratedBuildContext(repoUrl, runtimeConfig) {
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agentone-generated-build-"));
 
+  // archive/HEAD.tar.gz is GitHub's own "give me the default branch's tip,
+  // whatever it's called" URL — avoids needing to know/ask for main vs.
+  // master. github.com (and the codeload.github.com it redirects to) are
+  // both already allowlisted for the pip/npm VCS-install case, so this
+  // needs nothing new from the egress proxy.
+  const archiveUrl = `${repoUrl.replace(/\.git\/?$/, "").replace(/\/$/, "")}/archive/HEAD.tar.gz`;
+
   const dockerfileLines = [
     `FROM ${preset.baseImage}`,
-    `RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*`,
     `WORKDIR /app`,
-    `RUN git clone --depth 1 ${repoUrl} repo`,
+    `RUN ${preset.fetchCommand(archiveUrl)}`,
+    `RUN mkdir -p /app/repo && tar xzf /tmp/repo.tar.gz -C /app/repo --strip-components=1 && rm /tmp/repo.tar.gz`,
     `WORKDIR /app/repo`,
   ];
   if (installCommand) dockerfileLines.push(`RUN ${installCommand}`);
