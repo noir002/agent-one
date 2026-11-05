@@ -71,11 +71,18 @@ export async function executeEvalRun(evalRunId) {
   let envOverrides = {};
   if (evalRun.repoSubmissionId) {
     repoSubmission = await RepoSubmission.findById(evalRun.repoSubmissionId);
+    // "Use Agent One's own demo key" — resolved here, server-side, from
+    // process.env, the same way the judge already resolves its own LLM
+    // credential; the client never sees the real value. Applied first so
+    // an explicitly pasted credential (next) always wins if both are set.
+    if (repoSubmission?.useAgentOneDemoKey && process.env.LLM_API_KEY) {
+      envOverrides.GROQ_API_KEY = process.env.LLM_API_KEY;
+    }
     // The encrypted blob is a JSON string of { ENV_VAR_NAME: "value" }
     // pairs — the shape Phase C's docker shim expects to inject via
     // `docker run -e`.
     if (repoSubmission?.encryptedCredentials) {
-      envOverrides = JSON.parse(decrypt(repoSubmission.encryptedCredentials));
+      Object.assign(envOverrides, JSON.parse(decrypt(repoSubmission.encryptedCredentials)));
     }
   }
 

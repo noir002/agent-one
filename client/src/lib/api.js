@@ -90,6 +90,11 @@ export const api = {
   rateDirectoryTool: (slug, stars, text) => request(`/directory/${slug}/rate`, { method: "POST", body: JSON.stringify({ stars, text }) }),
   getDirectoryToolRatings: (slug) => request(`/directory/${slug}/ratings`),
 
+  // Self-service "test my GitHub repo in a sandbox" submissions
+  submitRepo: (payload) => request("/repo-submissions", { method: "POST", body: JSON.stringify(payload) }),
+  getRepoSubmission: (id) => request(`/repo-submissions/${id}`),
+  promoteRepoSubmission: (id) => request(`/repo-submissions/${id}/promote`, { method: "POST" }),
+
   // Auth
   me: () => request("/me"),
   devLogin: (name, role) => request("/auth/dev-login", { method: "POST", body: JSON.stringify({ name, role }) }),

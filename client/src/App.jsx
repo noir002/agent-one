@@ -6,6 +6,7 @@ import Home from "./pages/Home.jsx";
 import Listing from "./pages/Listing.jsx";
 import Compare from "./pages/Compare.jsx";
 import Submit from "./pages/Submit.jsx";
+import TestAgent from "./pages/TestAgent.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
 import OwnerDashboard from "./pages/OwnerDashboard.jsx";
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/directory" element={<Directory me={me} />} />
           <Route path="/submit" element={<Submit me={me} />} />
+          <Route path="/test-agent" element={<TestAgent me={me} />} />
           <Route path="/login" element={<Login onLoggedIn={refreshMe} />} />
           <Route path="/owner" element={<OwnerDashboard me={me} setMe={setMe} />} />
           <Route path="/admin" element={<Admin me={me} />} />

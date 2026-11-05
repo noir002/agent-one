@@ -24,12 +24,21 @@ import shareRoutes from "./routes/share.js";
 import mcpRoutes from "./routes/mcp.js";
 import ciRoutes from "./routes/ci.js";
 import directoryRoutes from "./routes/directory.js";
+import repoSubmissionsRoutes from "./routes/repoSubmissions.js";
 import authRoutes from "./routes/auth.js";
 import statsRoutes from "./routes/stats.js";
 import devAuthRoutes from "./auth/devAuth.js";
 import { isGoogleConfigured, configureGoogleAuth } from "./auth/google.js";
 import { isGitHubConfigured, configureGitHubAuth } from "./auth/github.js";
 import { CATEGORY_LABELS } from "@agentone/shared";
+
+// Fail fast, not on the first request: repoSubmissions.js encrypts a
+// pasted credential on every POST /, so a missing key should never make it
+// past startup to surface as a 500 the first time someone submits a repo.
+if (!process.env.CREDENTIAL_ENCRYPTION_KEY) {
+  console.error("[api] CREDENTIAL_ENCRYPTION_KEY is not set — required for the repo-submissions route. Generate one with `openssl rand -base64 32` and set it in .env.");
+  process.exit(1);
+}
 
 const app = express();
 
@@ -82,6 +91,7 @@ app.use("/api/tasks", tasksRoutes);
 // collection from Listing/the eval harness, never read by any Listing-
 // backed page (Home, Leaderboard, Agent Finder, the MCP server).
 app.use("/api/directory", directoryRoutes);
+app.use("/api/repo-submissions", repoSubmissionsRoutes);
 app.use("/api/flagships", flagshipsRoutes);
 app.use("/api/me", authRoutes);
 app.use("/api/stats", statsRoutes);

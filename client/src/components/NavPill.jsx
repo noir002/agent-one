@@ -15,6 +15,7 @@ export default function NavPill({ me, onLogout }) {
           <Link to="/directory" className="hover:text-ink">Directory</Link>
           <Link to="/reports" className="hover:text-ink">Reports</Link>
           <Link to="/submit" className="hover:text-ink">Submit</Link>
+          <Link to="/test-agent" className="hover:text-ink">Test agent</Link>
         </div>
         <div className="flex items-center gap-3">
           {me?.user ? (
