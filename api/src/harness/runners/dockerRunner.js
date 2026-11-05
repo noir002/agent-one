@@ -297,6 +297,7 @@ export async function runDockerTask({ manifest, task, envOverrides = {} }) {
 
   try {
     const tag = await ensureImage(manifest);
+    const { network: runtimeNetwork, env: proxyEnv } = await resolveRuntimeNetwork(manifest);
 
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentone-task-"));
     fs.writeFileSync(path.join(tmpDir, "input.json"), JSON.stringify({ input, fixtures }));
@@ -308,7 +309,11 @@ export async function runDockerTask({ manifest, task, envOverrides = {} }) {
       command: [],
       mounts: [{ hostPath: tmpDir, containerPath: "/task", readOnly: false }],
       timeoutS: task.budget?.timeoutS || 60,
-      env: envOverrides, // decrypted repo-submission credentials, if any — see runEvalRun.js
+      network: runtimeNetwork,
+      // Pasted/demo credentials (envOverrides) are allowed to override a
+      // proxy var in the unlikely case a submission sets its own — order
+      // here is deliberate, not incidental.
+      env: { ...proxyEnv, ...envOverrides },
     });
 
     for (const line of result.stdout.split("\n").filter(Boolean)) {
