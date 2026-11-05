@@ -49,11 +49,19 @@ export function isValidGithubRepoUrl(url) {
 
 // Fast-path commands are free-form shell (the whole point is running
 // whatever install/entry command the user's own repo needs), so metacharacters
-// are allowed — the only hard requirement is staying on one line, since a
-// literal newline would let the string spill into a second Dockerfile
-// instruction.
+// are allowed. installCommand specifically gets embedded directly into one
+// Dockerfile RUN instruction's line, so a literal newline there really
+// would let the string spill into a second, unintended instruction.
 function isValidShellCommandLine(cmd) {
   return typeof cmd === "string" && cmd.length > 0 && cmd.length <= 1000 && !/[\r\n]/.test(cmd);
+}
+
+// entryCommand never gets embedded in a Dockerfile line — it's only ever
+// JSON-encoded into runtime_config.json and read back by the shim, which
+// hands it to the subprocess as a normal (possibly multi-line) shell
+// script, so the newline restriction above doesn't apply to it.
+function isValidEntryCommand(cmd) {
+  return typeof cmd === "string" && cmd.length > 0 && cmd.length <= 4000;
 }
 
 const RUNTIME_PRESETS = {
@@ -193,8 +201,8 @@ function writeGeneratedBuildContext(repoUrl, runtimeConfig) {
   if (installCommand && !isValidShellCommandLine(installCommand)) {
     throw new Error("installCommand must be a single line (no newlines) under 1000 characters.");
   }
-  if (!isValidShellCommandLine(entryCommand)) {
-    throw new Error("entryCommand is required and must be a single line (no newlines) under 1000 characters.");
+  if (!isValidEntryCommand(entryCommand)) {
+    throw new Error("entryCommand is required and must be under 4000 characters.");
   }
   if (!["stdin", "file", "env_var"].includes(inputMode)) {
     throw new Error(`inputMode must be one of: stdin, file, env_var.`);

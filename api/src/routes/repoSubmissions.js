@@ -70,8 +70,8 @@ router.post("/", async (req, res) => {
     if (!VALID_RUNTIMES.includes(runtime)) {
       return res.status(400).json({ error: `runtimeConfig.runtime must be one of: ${VALID_RUNTIMES.join(", ")}.` });
     }
-    if (!entryCommand || typeof entryCommand !== "string" || /[\r\n]/.test(entryCommand)) {
-      return res.status(400).json({ error: "runtimeConfig.entryCommand is required and must be a single line." });
+    if (!entryCommand || typeof entryCommand !== "string" || entryCommand.length > 4000) {
+      return res.status(400).json({ error: "runtimeConfig.entryCommand is required and must be under 4000 characters." });
     }
     if (installCommand && (typeof installCommand !== "string" || /[\r\n]/.test(installCommand))) {
       return res.status(400).json({ error: "runtimeConfig.installCommand must be a single line." });
