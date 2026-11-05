@@ -85,6 +85,13 @@ export async function runInContainer({
 // boundary is the internal network having nowhere else to route to.
 export async function buildImageFromDockerfile(buildContextDir, tag, { network } = {}) {
   const args = ["build"];
+  // BuildKit (Docker's default builder since ~2023) only supports
+  // --network host/none for RUN steps — a custom bridge network is
+  // rejected outright ("network mode ... not supported by buildkit").
+  // The legacy builder has always supported an arbitrary --network, which
+  // is exactly what routing a build through the egress proxy needs, so
+  // force it off only for this call.
+  const env = network ? { ...process.env, DOCKER_BUILDKIT: "0" } : process.env;
   if (network) {
     const { network: dockerNetwork, proxyHost, proxyPort } = await ensureEgressNetwork(network);
     const proxyUrl = `http://${proxyHost}:${proxyPort}`;
@@ -97,7 +104,7 @@ export async function buildImageFromDockerfile(buildContextDir, tag, { network }
   args.push("-t", tag, buildContextDir);
 
   return new Promise((resolve, reject) => {
-    const child = spawn("docker", args);
+    const child = spawn("docker", args, { env });
     let stderr = "";
     child.stderr.on("data", (d) => { stderr += d.toString(); });
     child.on("close", (code) => {

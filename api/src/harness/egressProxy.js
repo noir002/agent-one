@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = (cmd, args) => new Promise((resolve, reject) => {
   execFile(cmd, args, (error, stdout, stderr) => {
@@ -9,6 +10,10 @@ const execFileAsync = (cmd, args) => new Promise((resolve, reject) => {
     else resolve({ stdout, stderr });
   });
 });
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SQUID_IMAGE_TAG = "agentone-egress-squid:latest";
+const SQUID_DOCKERFILE_DIR = path.join(__dirname, "squid");
 
 // Each profile is a standing, reused-across-runs allowlist — never created
 // per-run. The internal network has NO route to the internet at all
@@ -60,6 +65,20 @@ async function containerIsRunning(name) {
   }
 }
 
+async function imageExists(tag) {
+  try {
+    await execFileAsync("docker", ["image", "inspect", tag]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureSquidImage() {
+  if (await imageExists(SQUID_IMAGE_TAG)) return;
+  await execFileAsync("docker", ["build", "-t", SQUID_IMAGE_TAG, SQUID_DOCKERFILE_DIR]);
+}
+
 function buildSquidConf(allowedHosts) {
   return [
     "http_port 3128",
@@ -90,6 +109,8 @@ export async function ensureEgressNetwork(profileName) {
   }
 
   if (!(await containerIsRunning(profile.proxyContainer))) {
+    await ensureSquidImage();
+
     // Clear out any stopped/crashed container with the same name before
     // recreating — `docker run` fails if the name is already taken.
     await execFileAsync("docker", ["rm", "-f", profile.proxyContainer]).catch(() => {});
@@ -101,7 +122,7 @@ export async function ensureEgressNetwork(profileName) {
       "run", "-d", "--name", profile.proxyContainer,
       "--network", profile.internalNetwork,
       "-v", `${confDir}/squid.conf:/etc/squid/squid.conf:ro`,
-      "ubuntu/squid:latest",
+      SQUID_IMAGE_TAG,
     ]);
     await execFileAsync("docker", ["network", "connect", EXTERNAL_NETWORK, profile.proxyContainer]);
   }
