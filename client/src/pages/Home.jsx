@@ -36,11 +36,6 @@ export default function Home() {
       .catch((err) => setError(err.message));
   }, [category, query, filters]);
 
-  const groves = categories.map((c) => ({
-    category: c.category,
-    listings: listings.filter((l) => l.category === c.category),
-  }));
-
   // "Sponsored slots on category pages: always labelled 'Sponsored'" (HLD,
   // Phase 8) — only shown once a category is picked, pulled from the same
   // listings already fetched for it (no new query, no effect on their real
@@ -140,22 +135,8 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
         <CategoryPills categories={categories} active={category} onSelect={setCategory} />
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-5">
           <Filters filters={filters} onChange={setFilters} />
-          <div className="glass-chip flex rounded-full p-1">
-            <button
-              onClick={() => setView("forest")}
-              className={`rounded-full px-3 py-1 text-xs ${view === "forest" ? "bg-emerald text-bg" : "text-ink-muted"}`}
-            >
-              Forest
-            </button>
-            <button
-              onClick={() => setView("grid")}
-              className={`rounded-full px-3 py-1 text-xs ${view === "grid" ? "bg-emerald text-bg" : "text-ink-muted"}`}
-            >
-              Grid
-            </button>
-          </div>
         </div>
 
         {error && <p className="mt-4 text-sm text-amber">{error}</p>}
