@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { TIER_COLORS, CATEGORY_LABELS } from "@agentone/shared";
 import { freshnessLabel } from "../../lib/format.js";
 
-const DIM_COLOR = "#3A4541";
+// Light theme: dim now means "recedes toward the page's off-white
+// background" instead of "recedes toward black" — a pale, desaturated
+// tone rather than the old dark one. The category-label/ground tones below
+// are similarly flipped for contrast against a light backdrop.
+const DIM_COLOR = "#D7DAD3";
+const LABEL_COLOR = "#5B6B64";
+const GROUND_COLOR = "#E4E2DA";
 
 function Grove({ grove, x, width, query, hovered, setHovered }) {
   const navigate = useNavigate();
@@ -12,8 +18,8 @@ function Grove({ grove, x, width, query, hovered, setHovered }) {
 
   return (
     <g>
-      <line x1={trunkX} y1={260} x2={trunkX} y2={40} stroke="#0D9488" strokeWidth="2" opacity="0.6" />
-      <text x={trunkX} y={30} textAnchor="middle" fill="#8FA39B" fontSize="12" fontFamily="Space Grotesk, sans-serif">
+      <line x1={trunkX} y1={260} x2={trunkX} y2={40} stroke="#0D9488" strokeWidth="2" opacity="0.75" />
+      <text x={trunkX} y={30} textAnchor="middle" fill={LABEL_COLOR} fontSize="12" fontFamily="Space Grotesk, sans-serif">
         {CATEGORY_LABELS[grove.category]}
       </text>
       {grove.listings.map((listing, i) => {
@@ -26,7 +32,7 @@ function Grove({ grove, x, width, query, hovered, setHovered }) {
         const isHovered = hovered?.slug === listing.slug;
         return (
           <g key={listing.slug}>
-            <line x1={trunkX} y1={ny} x2={nx} y2={ny} stroke={dim ? DIM_COLOR : "#34D399"} strokeWidth="1" opacity={dim ? 0.2 : 0.5} />
+            <line x1={trunkX} y1={ny} x2={nx} y2={ny} stroke={dim ? DIM_COLOR : "#34D399"} strokeWidth="1" opacity={dim ? 0.4 : 0.7} />
             <circle
               cx={nx}
               cy={ny}
@@ -52,7 +58,7 @@ export default function SVGForestFallback({ groves, query }) {
   return (
     <div className="relative mx-auto max-w-3xl">
       <svg viewBox={`0 0 ${width} 280`} className="w-full" role="img" aria-label="Forest of agent listings by category">
-        <rect x="0" y="260" width={width} height="4" fill="#0B1114" />
+        <rect x="0" y="260" width={width} height="4" fill={GROUND_COLOR} />
         {groves.map((grove, i) => (
           <Grove
             key={grove.category}

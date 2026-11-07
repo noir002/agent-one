@@ -38,7 +38,7 @@ function ClaimsQueue() {
               >
                 Approve (L1 smoke test passed)
               </button>
-              <button onClick={() => reject(c._id)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">
+              <button onClick={() => reject(c._id)} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink hover:bg-ink/5">
                 Reject
               </button>
             </div>
@@ -126,7 +126,7 @@ function ScoreGapFlags() {
                 {Math.round(l.scoreGapFlag.previousScore)} → {Math.round(l.scoreGapFlag.newScore)} (gap {l.scoreGapFlag.gap.toFixed(1)}) on {new Date(l.scoreGapFlag.at).toLocaleDateString()}
               </p>
             </div>
-            <button onClick={() => clear(l._id)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">
+            <button onClick={() => clear(l._id)} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink hover:bg-ink/5">
               Clear flag
             </button>
           </div>
@@ -170,13 +170,13 @@ function ListingTools() {
             value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="listing slug"
             className="glass-chip flex-1 rounded-full px-3 py-1.5 text-xs text-ink focus:outline-none"
           />
-          <button onClick={lookup} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">Look up</button>
+          <button onClick={lookup} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink hover:bg-ink/5">Look up</button>
         </div>
         {id && (
           <div className="mt-3 flex flex-wrap gap-2">
             <button onClick={() => act(api.hideListing)} className="rounded-full border border-amber/40 px-3 py-1.5 text-xs text-amber">Hide</button>
-            <button onClick={() => act(api.unhideListing)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink">Unhide</button>
-            <button onClick={() => act(api.recheckFreshness)} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink">Re-check freshness</button>
+            <button onClick={() => act(api.unhideListing)} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink">Unhide</button>
+            <button onClick={() => act(api.recheckFreshness)} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink">Re-check freshness</button>
             <button onClick={() => act(api.toggleSponsored)} className="rounded-full border border-violet/40 px-3 py-1.5 text-xs text-violet">Toggle sponsored</button>
           </div>
         )}
@@ -239,12 +239,12 @@ function BillingTools() {
             placeholder="search users by name"
             className="glass-chip flex-1 rounded-full px-3 py-1.5 text-xs text-ink focus:outline-none"
           />
-          <button onClick={search} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink hover:bg-white/5">Search</button>
+          <button onClick={search} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink hover:bg-ink/5">Search</button>
         </div>
         {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
         <div className="mt-3 space-y-2">
           {users.map((u) => (
-            <div key={u._id} className="rounded-lg border border-white/10 p-3 text-xs">
+            <div key={u._id} className="rounded-lg border border-ink/10 p-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-ink">{u.name} <span className="text-ink-muted">({u.role})</span></span>
                 <span className="font-mono text-ink-muted">{u.plan} · {u.credits || 0} credits</span>
@@ -262,7 +262,7 @@ function BillingTools() {
                   placeholder="credits"
                   className="glass-chip w-20 rounded-full px-3 py-1 text-ink focus:outline-none"
                 />
-                <button onClick={() => grantCredits(u._id)} className="rounded-full border border-white/15 px-3 py-1 text-ink hover:bg-white/5">
+                <button onClick={() => grantCredits(u._id)} className="rounded-full border border-ink/15 px-3 py-1 text-ink hover:bg-ink/5">
                   Grant credits
                 </button>
               </div>
@@ -320,7 +320,7 @@ function TasksPanel() {
             </thead>
             <tbody>
               {catTasks.map((t) => (
-                <tr key={t._id} className="border-t border-white/10 text-ink">
+                <tr key={t._id} className="border-t border-ink/10 text-ink">
                   <td className="py-1.5 pr-2">{t.title}</td>
                   <td className="py-1.5 pr-2 text-ink-muted">
                     {t.isPublicSample ? "public" : t.isSafetyTask ? "safety" : "hidden"}

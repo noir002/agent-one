@@ -86,7 +86,7 @@ export default function Compare() {
             </thead>
             <tbody>
               {fields.map((f) => (
-                <tr key={f.key} className="border-t border-white/10">
+                <tr key={f.key} className="border-t border-ink/10">
                   <td className="py-3 text-xs text-ink-muted">{f.label}</td>
                   {listings.map((l) => <td key={l.slug} className="py-3 font-mono text-xs text-ink">{f.render(l)}</td>)}
                 </tr>

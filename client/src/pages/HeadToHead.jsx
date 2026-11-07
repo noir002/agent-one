@@ -59,7 +59,7 @@ export default function HeadToHead() {
           </thead>
           <tbody>
             {tasks.map((t) => (
-              <tr key={t.taskId} className="border-t border-white/10 text-xs">
+              <tr key={t.taskId} className="border-t border-ink/10 text-xs">
                 <td className="py-2 text-ink">{t.title}{t.isSafetyTask && <span className="ml-1 text-amber">(safety)</span>}</td>
                 <td className={`py-2 text-center font-mono ${t.winner === "a" ? "text-emerald" : "text-ink-muted"}`}>{t.a.passCount}/{t.a.total}</td>
                 <td className={`py-2 text-center font-mono ${t.winner === "b" ? "text-emerald" : "text-ink-muted"}`}>{t.b.passCount}/{t.b.total}</td>

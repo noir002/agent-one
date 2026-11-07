@@ -1,3 +1,4 @@
+@import "@fontsource/space-grotesk/300.css";
 @import "@fontsource/space-grotesk/500.css";
 @import "@fontsource/space-grotesk/600.css";
 @import "@fontsource/tiro-devanagari-hindi/400.css";
@@ -12,7 +13,7 @@
 @tailwind utilities;
 
 html, body {
-  background: #05080A;
+  background: #F6F5F1;
 }
 
 body {
@@ -23,41 +24,46 @@ h1, h2, h3, h4, .font-heading {
   font-family: "Space Grotesk", sans-serif;
 }
 
-/* Liquid glass — large surfaces only (nav pill, hero search, hover cards, dock). */
+/* Liquid glass — large surfaces only (nav pill, hero search, hover cards, dock).
+   Light theme: a near-white frosted fill (high opacity, since low-opacity
+   white is invisible against a light page) with a dark hairline border for
+   definition instead of the old white-on-black highlight border. */
 .glass {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(22, 24, 27, 0.08);
+  box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* Same as .glass plus the SVG refraction filter — nav pill and hero search only. */
 .glass-refract {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(22, 24, 27, 0.08);
+  box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   filter: url(#liquid-glass-distortion);
 }
 
 /* Small chips: plain frosted glass, no blur-heavy refraction, so text stays sharp. */
 .glass-chip {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(22, 24, 27, 0.07);
 }
 
+/* Soft color wash behind a hero — lightened from the old dark-glow version
+   so it reads as a gentle tint on a light page instead of a dark smudge. */
 .aurora-hero {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 50% at 15% 85%, rgba(6, 78, 59, 0.55) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 85% 10%, rgba(76, 29, 149, 0.5) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(13, 148, 136, 0.12) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 50% at 15% 85%, rgba(52, 211, 153, 0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 10%, rgba(167, 139, 250, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(13, 148, 136, 0.06) 0%, transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {

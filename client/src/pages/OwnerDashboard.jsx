@@ -105,13 +105,13 @@ function ListingPanel({ listing, me, onCreditsSpent }) {
           onChange={(e) => setYamlText(e.target.value)}
           placeholder="version: 1.0.0\ninterface:\n  type: http\n  ..."
           rows={5}
-          className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+          className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
         />
         <div className="mt-2 flex flex-wrap gap-2">
           <button onClick={handleConnectManifest} disabled={!yamlText.trim()} className="rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50">
             Save manifest
           </button>
-          <button onClick={handleEvaluate} className="rounded-full border border-white/15 px-4 py-1.5 text-xs text-ink hover:bg-white/5">
+          <button onClick={handleEvaluate} className="rounded-full border border-ink/15 px-4 py-1.5 text-xs text-ink hover:bg-ink/5">
             Request re-test
           </button>
           <button
@@ -136,7 +136,7 @@ function ListingPanel({ listing, me, onCreditsSpent }) {
             onClick={handleGenerateCiToken}
             disabled={!isPro}
             title={isPro ? "Generate a token for POST /api/ci/evaluate" : "Requires Verification Pro"}
-            className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink disabled:opacity-40"
+            className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink disabled:opacity-40"
           >
             {listing.hasCiToken ? "Regenerate CI token" : "Generate CI token"}
           </button>
@@ -144,13 +144,13 @@ function ListingPanel({ listing, me, onCreditsSpent }) {
             onClick={handleToggleTraceDetail}
             disabled={!isPro}
             title={isPro ? "" : "Requires Verification Pro"}
-            className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-ink disabled:opacity-40"
+            className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink disabled:opacity-40"
           >
             {hideTraceDetail ? "Trace detail: hidden from public — click to show" : "Trace detail: public — click to hide"}
           </button>
         </div>
         {ciToken && (
-          <p className="mt-2 break-all rounded-lg border border-white/10 bg-black/20 p-2 font-mono text-xs text-ink">{ciToken}</p>
+          <p className="mt-2 break-all rounded-lg border border-ink/10 bg-black/20 p-2 font-mono text-xs text-ink">{ciToken}</p>
         )}
         {planMessage && <p className="mt-2 text-xs text-ink-muted">{planMessage}</p>}
       </div>
@@ -161,7 +161,7 @@ function ListingPanel({ listing, me, onCreditsSpent }) {
         {disputeMessage && <p className="mt-2 text-xs text-ink-muted">{disputeMessage}</p>}
         <div className="mt-2 space-y-2">
           {evalRuns.map((run) => (
-            <div key={run._id} className="rounded-lg border border-white/10 p-3 text-xs">
+            <div key={run._id} className="rounded-lg border border-ink/10 p-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-ink">
                   {run.status}

@@ -20,20 +20,20 @@ export default function ShareBar({ sharePath, title }) {
 
   return (
     <div className="mt-4 flex flex-wrap gap-2 text-xs">
-      <button onClick={copy} className="rounded-full border border-white/15 px-3 py-1.5 text-ink hover:bg-white/5">
+      <button onClick={copy} className="rounded-full border border-ink/15 px-3 py-1.5 text-ink hover:bg-ink/5">
         {copied ? "Copied!" : "Copy link"}
       </button>
       <a
         href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
         target="_blank" rel="noopener noreferrer"
-        className="rounded-full border border-white/15 px-3 py-1.5 text-ink hover:bg-white/5"
+        className="rounded-full border border-ink/15 px-3 py-1.5 text-ink hover:bg-ink/5"
       >
         Share to X
       </a>
       <a
         href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
         target="_blank" rel="noopener noreferrer"
-        className="rounded-full border border-white/15 px-3 py-1.5 text-ink hover:bg-white/5"
+        className="rounded-full border border-ink/15 px-3 py-1.5 text-ink hover:bg-ink/5"
       >
         Share to LinkedIn
       </a>

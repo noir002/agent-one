@@ -188,7 +188,7 @@ export default function Listing({ me }) {
 
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 font-heading text-lg text-ink-muted">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink/5 font-heading text-lg text-ink-muted">
             {initials(listing.name)}
           </div>
           <div>
@@ -218,11 +218,11 @@ export default function Listing({ me }) {
       <p className="mt-6 text-sm leading-relaxed text-ink-muted">{listing.description || listing.tagline}</p>
 
       <div className="mt-6 flex flex-wrap gap-3 text-sm">
-        <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-4 py-2 text-ink hover:bg-white/5">
+        <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-4 py-2 text-ink hover:bg-ink/5">
           Visit site ↗
         </a>
         {listing.repoUrl && (
-          <a href={listing.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-4 py-2 text-ink hover:bg-white/5">
+          <a href={listing.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-4 py-2 text-ink hover:bg-ink/5">
             View repo ↗
           </a>
         )}
@@ -244,7 +244,7 @@ export default function Listing({ me }) {
               : "Ask a research question…"
             }
             rows={3}
-            className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+            className="mt-3 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
           />
           {listing.slug === "repo-fixer" && (
             <div className="mt-2">
@@ -253,7 +253,7 @@ export default function Listing({ me }) {
                 Only .py and .js get a real syntax check.
               </p>
               <div className="mt-2 flex items-center gap-2">
-                <label className="glass-chip cursor-pointer rounded-full px-3 py-1.5 text-xs text-ink hover:bg-white/5">
+                <label className="glass-chip cursor-pointer rounded-full px-3 py-1.5 text-xs text-ink hover:bg-ink/5">
                   Upload file…
                   <input type="file" accept=".py,.js,.ts,.jsx,.tsx,.txt" onChange={handleFileUpload} className="hidden" />
                 </label>
@@ -264,14 +264,14 @@ export default function Listing({ me }) {
                 value={tryFilename}
                 onChange={(e) => setTryFilename(e.target.value)}
                 placeholder="filename, e.g. candidate.py"
-                className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+                className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
               />
               <textarea
                 value={tryFileContent}
                 onChange={(e) => setTryFileContent(e.target.value)}
                 placeholder={"def add(a, b):\n    return a - b  # bug: should be +"}
                 rows={5}
-                className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+                className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
               />
             </div>
           )}
@@ -300,7 +300,7 @@ export default function Listing({ me }) {
           </button>
           {tryError && <p className="mt-2 text-xs text-amber">{tryError}</p>}
           {(tryEvents.length > 0 || tryOutput) && (
-            <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3 font-mono text-xs text-ink-muted">
+            <div className="mt-3 rounded-lg border border-ink/10 bg-black/20 p-3 font-mono text-xs text-ink-muted">
               {tryEvents.map((e, i) => (
                 <div key={i} className="mb-1">
                   <span className="text-emerald">{e.event}</span>: {JSON.stringify(e.data).slice(0, 160)}
@@ -353,13 +353,13 @@ export default function Listing({ me }) {
         <div className="mt-3 space-y-2">
           <div>
             <p className="text-xs text-ink-muted">Markdown</p>
-            <code className="mt-1 block overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-ink">
+            <code className="mt-1 block overflow-x-auto rounded-lg border border-ink/10 bg-black/20 p-2 text-xs text-ink">
               {`[![Agent One](${window.location.origin}${api.badgeUrl(listing.slug)})](${window.location.origin}/listing/${listing.slug})`}
             </code>
           </div>
           <div>
             <p className="text-xs text-ink-muted">HTML</p>
-            <code className="mt-1 block overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-ink">
+            <code className="mt-1 block overflow-x-auto rounded-lg border border-ink/10 bg-black/20 p-2 text-xs text-ink">
               {`<a href="${window.location.origin}/listing/${listing.slug}"><img src="${window.location.origin}${api.badgeUrl(listing.slug)}" alt="Agent One badge"></a>`}
             </code>
           </div>
@@ -382,7 +382,7 @@ export default function Listing({ me }) {
                 onChange={(e) => setQuickRunInput(e.target.value)}
                 placeholder="Give it something to do…"
                 rows={3}
-                className="mt-3 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+                className="mt-3 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
               />
               <button
                 onClick={handleQuickRun}
@@ -393,7 +393,7 @@ export default function Listing({ me }) {
               </button>
               {quickRunError && <p className="mt-2 text-xs text-amber">{quickRunError}</p>}
               {quickRun && (
-                <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3 text-xs">
+                <div className="mt-3 rounded-lg border border-ink/10 bg-black/20 p-3 text-xs">
                   <p className={quickRun.status === "error" ? "text-amber" : "text-ink-muted"}>
                     {quickRun.status === "error" ? quickRun.errorMessage || "The run failed." : quickRun.output}
                   </p>
@@ -418,7 +418,7 @@ export default function Listing({ me }) {
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="What did you think? (optional)"
                     rows={2}
-                    className="mt-2 w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+                    className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
                   />
                   <button onClick={handleSubmitReview} className="mt-2 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90">
                     Submit review
@@ -437,7 +437,7 @@ export default function Listing({ me }) {
           <h2 className="font-heading text-sm font-semibold text-ink">Reviews</h2>
           <div className="mt-3 space-y-3">
             {reviews.map((r) => (
-              <div key={r._id} className="border-t border-white/10 pt-3 first:border-0 first:pt-0">
+              <div key={r._id} className="border-t border-ink/10 pt-3 first:border-0 first:pt-0">
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-amber">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
                   <span className="text-ink-muted">{r.userId?.name || "Anonymous"}</span>
@@ -483,7 +483,7 @@ export default function Listing({ me }) {
           ) : (
             <div className="mt-3 space-y-2 text-xs text-ink-muted">
               <p>{claimResult.instructions}</p>
-              <button onClick={handleCheckDomain} className="rounded-full border border-white/15 px-4 py-1.5 text-ink hover:bg-white/5">
+              <button onClick={handleCheckDomain} className="rounded-full border border-ink/15 px-4 py-1.5 text-ink hover:bg-ink/5">
                 Check now
               </button>
               {domainCheck && (

@@ -11,7 +11,7 @@ export default function ListingCard({ listing }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 font-heading text-sm text-ink-muted">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/5 font-heading text-sm text-ink-muted">
             {initials(listing.name)}
           </div>
           <div>

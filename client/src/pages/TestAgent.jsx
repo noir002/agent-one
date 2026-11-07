@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api.js";
 
-const inputClass = "w-full rounded-lg border border-white/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald";
-const selectClass = "w-full rounded-lg border border-white/15 bg-bg px-3 py-2 text-sm text-ink";
+const inputClass = "w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald";
+const selectClass = "w-full rounded-lg border border-ink/15 bg-bg px-3 py-2 text-sm text-ink";
 
 function ScorePartsBar({ scoreParts }) {
   if (!scoreParts) return null;
@@ -195,9 +195,9 @@ export default function TestAgent({ me }) {
               {credentialRows.map((row, i) => (
                 <div key={i} className="mt-2 flex gap-2">
                   <input value={row.key} onChange={setCredentialRow(i, "key")} placeholder="GROQ_API_KEY"
-                    className="w-2/5 rounded-lg border border-white/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald" />
+                    className="w-2/5 rounded-lg border border-ink/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald" />
                   <input type="password" value={row.value} onChange={setCredentialRow(i, "value")} placeholder="value (this run only)"
-                    className="flex-1 rounded-lg border border-white/15 bg-transparent px-3 py-1.5 text-xs text-ink focus:outline-none focus:border-emerald" />
+                    className="flex-1 rounded-lg border border-ink/15 bg-transparent px-3 py-1.5 text-xs text-ink focus:outline-none focus:border-emerald" />
                   <button type="button" onClick={() => removeCredentialRow(i)} className="text-xs text-ink-muted hover:text-amber">×</button>
                 </div>
               ))}

@@ -28,7 +28,7 @@ function TaskRunPage({ id }) {
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <h1 className="font-heading text-xl font-semibold text-ink">{listing?.name} · {task?.title}</h1>
-        <span className={`rounded-full border px-3 py-1 font-mono text-xs uppercase ${OUTCOME_STYLES[taskRun.outcome] || "text-ink-muted border-white/15"}`}>
+        <span className={`rounded-full border px-3 py-1 font-mono text-xs uppercase ${OUTCOME_STYLES[taskRun.outcome] || "text-ink-muted border-ink/15"}`}>
           {taskRun.outcome}
         </span>
       </div>
@@ -40,7 +40,7 @@ function TaskRunPage({ id }) {
         <h2 className="font-heading text-sm font-semibold text-ink">Trace</h2>
         <div className="mt-3"><EventTimeline events={taskRun.events} /></div>
         <h2 className="mt-4 font-heading text-sm font-semibold text-ink">Final output</h2>
-        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-white/10 bg-black/20 p-3 text-xs text-ink-muted">{taskRun.finalOutput || "(no output)"}</p>
+        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-ink/10 bg-black/20 p-3 text-xs text-ink-muted">{taskRun.finalOutput || "(no output)"}</p>
         {taskRun.errorMessage && <p className="mt-2 text-xs text-amber">{taskRun.errorMessage}</p>}
       </section>
 
@@ -95,7 +95,7 @@ function QuickRunPage({ id }) {
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <h1 className="font-heading text-xl font-semibold text-ink">{quickRun.listingId?.name}</h1>
-        <span className={`rounded-full border px-3 py-1 font-mono text-xs uppercase ${OUTCOME_STYLES[quickRun.status] || "text-ink-muted border-white/15"}`}>
+        <span className={`rounded-full border px-3 py-1 font-mono text-xs uppercase ${OUTCOME_STYLES[quickRun.status] || "text-ink-muted border-ink/15"}`}>
           {quickRun.status}
         </span>
       </div>
@@ -105,7 +105,7 @@ function QuickRunPage({ id }) {
 
       <section className="glass mt-6 rounded-card p-5">
         <h2 className="font-heading text-sm font-semibold text-ink">Input</h2>
-        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-white/10 bg-black/20 p-3 text-xs text-ink-muted">{quickRun.input}</p>
+        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-ink/10 bg-black/20 p-3 text-xs text-ink-muted">{quickRun.input}</p>
         {quickRun.events?.length > 0 && (
           <>
             <h2 className="mt-4 font-heading text-sm font-semibold text-ink">Trace</h2>
@@ -113,7 +113,7 @@ function QuickRunPage({ id }) {
           </>
         )}
         <h2 className="mt-4 font-heading text-sm font-semibold text-ink">Output</h2>
-        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-white/10 bg-black/20 p-3 text-xs text-ink-muted">{quickRun.output || "(no output)"}</p>
+        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-ink/10 bg-black/20 p-3 text-xs text-ink-muted">{quickRun.output || "(no output)"}</p>
         {quickRun.errorMessage && <p className="mt-2 text-xs text-amber">{quickRun.errorMessage}</p>}
       </section>
 

@@ -58,9 +58,9 @@ function ToolCard({ tool, me, onRated }) {
     <div className="glass rounded-card p-5">
       <div className="flex items-start gap-3">
         {tool.logoUrl ? (
-          <img src={tool.logoUrl} alt="" className="h-10 w-10 rounded-full bg-white/5 object-contain" onError={(e) => { e.target.style.display = "none"; }} />
+          <img src={tool.logoUrl} alt="" className="h-10 w-10 rounded-full bg-ink/5 object-contain" onError={(e) => { e.target.style.display = "none"; }} />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 font-heading text-sm text-ink-muted">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink/5 font-heading text-sm text-ink-muted">
             {initials(tool.name)}
           </div>
         )}
@@ -88,7 +88,7 @@ function ToolCard({ tool, me, onRated }) {
           </span>
         </div>
         <div className="flex gap-2">
-          <a href={tool.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1 text-xs text-ink hover:bg-white/5">
+          <a href={tool.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-3 py-1 text-xs text-ink hover:bg-ink/5">
             Visit ↗
           </a>
           {tool.demoUrl ? (
@@ -96,7 +96,7 @@ function ToolCard({ tool, me, onRated }) {
               Try their demo ↗
             </a>
           ) : (
-            <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-ink-muted">No public demo listed</span>
+            <span className="rounded-full border border-ink/10 px-3 py-1 text-xs text-ink-muted">No public demo listed</span>
           )}
         </div>
       </div>

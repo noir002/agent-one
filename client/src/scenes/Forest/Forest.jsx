@@ -6,17 +6,20 @@ import { TIER_COLORS, CATEGORY_LABELS } from "@agentone/shared";
 import { buildForestLayout } from "./layout.js";
 import { freshnessLabel } from "../../lib/format.js";
 
-const DIM_COLOR = "#2A332F";
+// Light theme: dim recedes toward the page's off-white background instead
+// of toward black, and opacities are bumped up since mid-tone colors wash
+// out more over a light backdrop than a dark one.
+const DIM_COLOR = "#D7DAD3";
 
 function Trunk({ base, top }) {
   return (
-    <Line points={[base, top]} color="#0D9488" lineWidth={2} transparent opacity={0.6} />
+    <Line points={[base, top]} color="#0D9488" lineWidth={2} transparent opacity={0.8} />
   );
 }
 
 function Branch({ start, end, dim }) {
   return (
-    <Line points={[start, end]} color={dim ? DIM_COLOR : "#34D399"} lineWidth={1} transparent opacity={dim ? 0.15 : 0.45} />
+    <Line points={[start, end]} color={dim ? DIM_COLOR : "#34D399"} lineWidth={1} transparent opacity={dim ? 0.35 : 0.7} />
   );
 }
 
@@ -36,7 +39,7 @@ function ForestGroup({ layout, query, onHover, hovered }) {
           <Text
             position={[grove.trunkTop[0], grove.trunkTop[1] + 0.6, grove.trunkTop[2]]}
             fontSize={0.32}
-            color="#8FA39B"
+            color="#5B6B64"
             anchorX="center"
             anchorY="bottom"
           >
