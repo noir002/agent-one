@@ -24,34 +24,57 @@ h1, h2, h3, h4, .font-heading {
   font-family: "Space Grotesk", sans-serif;
 }
 
-/* Liquid glass — large surfaces only (nav pill, hero search, hover cards, dock).
-   Light theme: a near-white frosted fill (high opacity, since low-opacity
-   white is invisible against a light page) with a dark hairline border for
-   definition instead of the old white-on-black highlight border. */
+/* Neumorphism: every surface is carved from the same material as the page
+   (--neo-bg matches html/body's background exactly) — depth comes only from
+   a light shadow (as if lit from the top-left) and a dark shadow (as if
+   lit from the top-left, so the opposite corner falls into shadow), never
+   from a border or transparency. "Outcarved" = raised off the page.
+   "Incarved" = pressed into it — used for anything you type into or that
+   represents a pressed/active state. */
+:root {
+  --neo-bg: #F6F5F1;
+  --neo-light: rgba(255, 255, 255, 0.9);
+  --neo-dark: rgba(173, 170, 158, 0.55);
+}
+
+/* Outcarved — large surfaces (nav pill, cards, hover panels, dock). Replaces
+   the earlier frosted-glass treatment; kept the .glass class name since it's
+   used in ~15 files, but it's a solid neumorphic surface now, not a blur. */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(22, 24, 27, 0.08);
-  box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: var(--neo-bg);
+  border: none;
+  box-shadow: 9px 9px 18px var(--neo-dark), -9px -9px 18px var(--neo-light);
 }
 
-/* Same as .glass plus the SVG refraction filter — nav pill and hero search only. */
+/* Nav pill — outcarved, a little deeper since it floats above everything else. */
 .glass-refract {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(22, 24, 27, 0.08);
-  box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  filter: url(#liquid-glass-distortion);
+  background: var(--neo-bg);
+  border: none;
+  box-shadow: 11px 11px 22px var(--neo-dark), -11px -11px 22px var(--neo-light);
 }
 
-/* Small chips: plain frosted glass, no blur-heavy refraction, so text stays sharp. */
+/* Small chips (category/filter pills) — a shallower outcarved surface so a
+   row of them doesn't read as heavier than the cards containing them. */
 .glass-chip {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(22, 24, 27, 0.07);
+  background: var(--neo-bg);
+  border: none;
+  box-shadow: 4px 4px 8px var(--neo-dark), -4px -4px 8px var(--neo-light);
+}
+
+/* Incarved — text inputs and anything "pressed"/active: the shadow logic
+   flips to inset, so the surface reads as carved in rather than raised up. */
+.neo-in {
+  background: var(--neo-bg);
+  border: none;
+  box-shadow: inset 5px 5px 10px var(--neo-dark), inset -5px -5px 10px var(--neo-light);
+}
+
+/* Shallower inset, for a chip-sized pressed/active state (selected category
+   pill, active filter). */
+.neo-in-sm {
+  background: var(--neo-bg);
+  border: none;
+  box-shadow: inset 3px 3px 6px var(--neo-dark), inset -3px -3px 6px var(--neo-light);
 }
 
 /* Soft color wash behind a hero — lightened from the old dark-glow version

@@ -32,12 +32,12 @@ export default function Login({ onLoggedIn }) {
           <label className="mb-1 block text-xs text-ink-muted">Name</label>
           <input
             type="text" required value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+            className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
           />
         </div>
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Role (for testing)</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-lg border border-ink/15 bg-bg px-3 py-2 text-sm text-ink">
+          <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink">
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
@@ -49,8 +49,8 @@ export default function Login({ onLoggedIn }) {
       </form>
 
       <div className="mt-4 flex justify-center gap-3 text-xs text-ink-muted">
-        <a href="/api/auth/github" className="rounded-full border border-ink/15 px-4 py-2 hover:bg-ink/5">GitHub</a>
-        <a href="/api/auth/google" className="rounded-full border border-ink/15 px-4 py-2 hover:bg-ink/5">Google</a>
+        <a href="/api/auth/github" className="glass-chip rounded-full px-4 py-2">GitHub</a>
+        <a href="/api/auth/google" className="glass-chip rounded-full px-4 py-2">Google</a>
       </div>
     </div>
   );

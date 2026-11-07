@@ -27,7 +27,7 @@ export default function NavPill({ me, onLogout }) {
                 <Link to="/admin" className="hidden text-xs text-violet hover:underline sm:inline">Admin</Link>
               )}
               <span className="hidden text-xs text-ink-muted sm:inline">{me.user.name}</span>
-              <button onClick={onLogout} className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink hover:bg-ink/5">
+              <button onClick={onLogout} className="rounded-full glass-chip px-3 py-1.5 text-xs text-ink hover:bg-ink/5">
                 Sign out
               </button>
             </>

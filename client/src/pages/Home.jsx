@@ -54,61 +54,69 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative overflow-hidden pb-16 pt-10">
-        <div className="aurora-hero" />
-        <div className="relative mx-auto grid max-w-5xl gap-10 px-4 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
-          <div>
-            <h1 className="font-heading text-4xl leading-[1.05] sm:text-5xl">
-              <span className="block font-light text-ink-muted">Every agent, tested.</span>
-              <span className="block font-semibold text-ink">Not just promised.</span>
-            </h1>
-            <p className="mt-5 max-w-md text-sm text-ink-muted">
-              Other directories list agents and link out. We connect to agents, run them on standard tasks,
-              and publish the trace — so every score is a real, recorded run.
-            </p>
+      <section className="relative overflow-hidden">
+        {/* The full image, uncropped — natural aspect ratio, width-constrained
+            only, so nothing is ever cut off regardless of viewport height. */}
+        <img
+          src={robotImage}
+          alt="Agent One's mascot sitting in a meadow"
+          className="block w-full h-auto"
+        />
+        {/* Bottom scrim so the light-colored stats line stays legible over
+            whatever part of the photo ends up underneath it. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
+          style={{ background: "linear-gradient(to top, rgba(10,12,10,0.55), rgba(10,12,10,0))" }}
+        />
 
-            <div className="mt-8 max-w-xl">
-              <SearchBar value={query} onChange={setQuery} />
-            </div>
+        {/* Text overlaid directly on the image — its sky is nearly the same
+            off-white as the page background, so the headline reads cleanly
+            without needing its own backdrop. */}
+        <div className="absolute inset-0">
+          <div className="relative mx-auto h-full max-w-5xl px-4">
+            <div className="max-w-md pt-10">
+              <h1 className="font-heading text-4xl leading-[1.05] sm:text-5xl">
+                <span className="block font-light text-ink-muted">Every agent, tested.</span>
+                <span className="block font-semibold text-ink">Not just promised.</span>
+              </h1>
+              <p className="mt-5 text-sm text-ink-muted">
+                Other directories list agents and link out. We connect to agents, run them on standard tasks,
+                and publish the trace — so every score is a real, recorded run.
+              </p>
 
-            <div className="mt-5">
-              <SubmitAgentCTA />
-            </div>
-
-            {stats && (
-              <div className="mt-10 border-t border-ink/10 pt-4">
-                <p className="text-xs text-ink-muted">
-                  Every score comes from a real, recorded eval run — not a self-reported claim.
-                </p>
-                <div className="mt-2 flex gap-5 font-mono text-sm text-ink-muted">
-                  <div><span className="text-ink">{stats.agentsListed}</span> listed</div>
-                  <div><span className="text-ink">{stats.agentsTested}</span> tested</div>
-                  <div><span className="text-ink">{stats.runsThisWeek}</span> runs this week</div>
-                </div>
+              <div className="mt-8">
+                <SearchBar value={query} onChange={setQuery} />
               </div>
-            )}
-          </div>
 
-          <div className="overflow-hidden rounded-card bg-bg-raised shadow-lg ring-1 ring-ink/5">
-            <div
-              className="aspect-[4/3] w-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${robotImage})` }}
-              role="img"
-              aria-label="Agent One's mascot"
-            />
+              <div className="mt-5">
+                <SubmitAgentCTA />
+              </div>
+            </div>
+
             {topListing && (
               <Link
                 to={`/listing/${topListing.slug}`}
-                className="flex items-center justify-between px-5 py-4 hover:bg-ink/5"
+                className="glass absolute right-4 top-10 w-52 rounded-card p-4 shadow-lg sm:right-8"
               >
-                <div className="min-w-0">
-                  <p className="truncate font-heading text-sm font-semibold text-ink">{topListing.name}</p>
-                  <p className="mt-0.5 truncate font-mono text-xs text-ink-muted">
-                    {topListing.score != null ? `Score ${Math.round(topListing.score)} · ${topListing.tier}` : topListing.tier}
-                  </p>
-                </div>
-                <span className="shrink-0 pl-3 text-ink">→</span>
+                <p className="truncate font-heading text-sm font-semibold text-ink">{topListing.name}</p>
+                <p className="mt-0.5 truncate font-mono text-xs text-ink-muted">
+                  {topListing.score != null ? `Score ${Math.round(topListing.score)} · ${topListing.tier}` : topListing.tier}
+                </p>
+                <span className="mt-2 inline-block text-ink">→</span>
               </Link>
+            )}
+
+            {stats && (
+              <div className="absolute bottom-6 left-4 right-4 text-white">
+                <p className="text-xs text-white/80">
+                  Every score comes from a real, recorded eval run — not a self-reported claim.
+                </p>
+                <div className="mt-2 flex gap-5 font-mono text-sm">
+                  <div><span className="font-semibold">{stats.agentsListed}</span> listed</div>
+                  <div><span className="font-semibold">{stats.agentsTested}</span> tested</div>
+                  <div><span className="font-semibold">{stats.runsThisWeek}</span> runs this week</div>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -177,7 +185,7 @@ export default function Home() {
             <Link to="/submit" className="rounded-full bg-emerald px-5 py-2.5 text-sm font-medium text-bg hover:opacity-90">
               Submit an agent
             </Link>
-            <Link to="/how-we-make-money" className="rounded-full border border-ink/15 px-5 py-2.5 text-sm text-ink hover:bg-ink/5">
+            <Link to="/how-we-make-money" className="rounded-full glass-chip px-5 py-2.5 text-sm text-ink hover:bg-ink/5">
               How we make money
             </Link>
           </div>

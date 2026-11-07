@@ -88,7 +88,7 @@ function ToolCard({ tool, me, onRated }) {
           </span>
         </div>
         <div className="flex gap-2">
-          <a href={tool.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-3 py-1 text-xs text-ink hover:bg-ink/5">
+          <a href={tool.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full glass-chip px-3 py-1 text-xs text-ink hover:bg-ink/5">
             Visit ↗
           </a>
           {tool.demoUrl ? (

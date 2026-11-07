@@ -218,11 +218,11 @@ export default function Listing({ me }) {
       <p className="mt-6 text-sm leading-relaxed text-ink-muted">{listing.description || listing.tagline}</p>
 
       <div className="mt-6 flex flex-wrap gap-3 text-sm">
-        <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-4 py-2 text-ink hover:bg-ink/5">
+        <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer" className="glass-chip rounded-full px-4 py-2 text-ink">
           Visit site ↗
         </a>
         {listing.repoUrl && (
-          <a href={listing.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-ink/15 px-4 py-2 text-ink hover:bg-ink/5">
+          <a href={listing.repoUrl} target="_blank" rel="noopener noreferrer" className="glass-chip rounded-full px-4 py-2 text-ink">
             View repo ↗
           </a>
         )}
@@ -244,7 +244,7 @@ export default function Listing({ me }) {
               : "Ask a research question…"
             }
             rows={3}
-            className="mt-3 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+            className="mt-3 w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
           />
           {listing.slug === "repo-fixer" && (
             <div className="mt-2">
@@ -264,14 +264,14 @@ export default function Listing({ me }) {
                 value={tryFilename}
                 onChange={(e) => setTryFilename(e.target.value)}
                 placeholder="filename, e.g. candidate.py"
-                className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+                className="mt-2 w-full rounded-lg neo-in px-3 py-1.5 font-mono text-xs text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
               />
               <textarea
                 value={tryFileContent}
                 onChange={(e) => setTryFileContent(e.target.value)}
                 placeholder={"def add(a, b):\n    return a - b  # bug: should be +"}
                 rows={5}
-                className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:border-emerald"
+                className="mt-2 w-full rounded-lg neo-in px-3 py-2 font-mono text-xs text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
               />
             </div>
           )}
@@ -382,7 +382,7 @@ export default function Listing({ me }) {
                 onChange={(e) => setQuickRunInput(e.target.value)}
                 placeholder="Give it something to do…"
                 rows={3}
-                className="mt-3 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+                className="mt-3 w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
               />
               <button
                 onClick={handleQuickRun}
@@ -418,7 +418,7 @@ export default function Listing({ me }) {
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="What did you think? (optional)"
                     rows={2}
-                    className="mt-2 w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald"
+                    className="mt-2 w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30"
                   />
                   <button onClick={handleSubmitReview} className="mt-2 rounded-full bg-emerald px-4 py-1.5 text-xs font-medium text-bg hover:opacity-90">
                     Submit review
@@ -483,7 +483,7 @@ export default function Listing({ me }) {
           ) : (
             <div className="mt-3 space-y-2 text-xs text-ink-muted">
               <p>{claimResult.instructions}</p>
-              <button onClick={handleCheckDomain} className="rounded-full border border-ink/15 px-4 py-1.5 text-ink hover:bg-ink/5">
+              <button onClick={handleCheckDomain} className="glass-chip rounded-full px-4 py-1.5 text-ink">
                 Check now
               </button>
               {domainCheck && (

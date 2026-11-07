@@ -49,42 +49,42 @@ export default function Submit({ me }) {
       <form onSubmit={handleSubmit} className="glass mt-6 space-y-4 rounded-card p-6">
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Name *</label>
-          <input required value={form.name} onChange={set("name")} className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald" />
+          <input required value={form.name} onChange={set("name")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs text-ink-muted">Category *</label>
-            <select value={form.category} onChange={set("category")} className="w-full rounded-lg border border-ink/15 bg-bg px-3 py-2 text-sm text-ink">
+            <select value={form.category} onChange={set("category")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs text-ink-muted">Type *</label>
-            <select value={form.type} onChange={set("type")} className="w-full rounded-lg border border-ink/15 bg-bg px-3 py-2 text-sm text-ink">
+            <select value={form.type} onChange={set("type")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink">
               {LISTING_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
         </div>
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Tagline</label>
-          <input value={form.tagline} onChange={set("tagline")} className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald" />
+          <input value={form.tagline} onChange={set("tagline")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30" />
         </div>
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Description</label>
-          <textarea rows={3} value={form.description} onChange={set("description")} className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald" />
+          <textarea rows={3} value={form.description} onChange={set("description")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30" />
         </div>
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Source URL (its own site) *</label>
-          <input required type="url" value={form.sourceUrl} onChange={set("sourceUrl")} className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald" />
+          <input required type="url" value={form.sourceUrl} onChange={set("sourceUrl")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30" />
         </div>
         <div>
           <label className="mb-1 block text-xs text-ink-muted">Repo URL (if open-source)</label>
-          <input type="url" value={form.repoUrl} onChange={set("repoUrl")} className="w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none focus:border-emerald" />
+          <input type="url" value={form.repoUrl} onChange={set("repoUrl")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-emerald/30" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs text-ink-muted">Pricing</label>
-            <select value={form.pricing} onChange={set("pricing")} className="w-full rounded-lg border border-ink/15 bg-bg px-3 py-2 text-sm text-ink">
+            <select value={form.pricing} onChange={set("pricing")} className="w-full rounded-lg neo-in px-3 py-2 text-sm text-ink">
               {PRICING_MODELS.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
