@@ -12,8 +12,59 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens — light is the default (:root), dark lives under
+   [data-theme="dark"] (toggled on <html> by ThemeContext). Every Tailwind
+   color in tailwind.config.js resolves through one of these as
+   `rgb(var(--color-x) / <alpha-value>)`, so existing text-ink/bg-bg/etc
+   classes across the whole app — including the landing page — repaint
+   automatically on toggle; no per-component dark: variants needed.
+   --neo-* and --glass-* back the surface-effect classes below, which do
+   switch technique between themes (soft neumorphism in light, frosted
+   "techy" glass with a neon edge in dark), since a flat carved-from-the-
+   page surface doesn't read as "techy" the way a glowing glass panel does. */
+:root {
+  --color-bg: 246 245 241;
+  --color-bg-raised: 255 255 255;
+  --color-ink: 22 24 27;
+  --color-ink-muted: 107 112 105;
+  --color-emerald: 52 211 153;
+  --color-violet: 167 139 250;
+  --color-teal: 13 148 136;
+  --color-amber: 251 191 36;
+  --color-tier-l0: 91 107 100;
+  --color-tier-l1: 52 211 153;
+  --color-tier-l2: 124 92 224;
+  --color-tier-l3: 76 29 149;
+
+  --neo-bg: #F6F5F1;
+  --neo-light: rgba(255, 255, 255, 0.9);
+  --neo-dark: rgba(173, 170, 158, 0.55);
+}
+
+/* Dark theme palette: black + charcoal + grey/silver neutrals, with exactly
+   one saturated accent — neon green — instead of the emerald/violet/teal
+   mix the light theme uses. tier-l2 (silver) and tier-l0 (grey) carry the
+   "supporting" neutrals; tier-l1/l3 get the neon-green accent since those
+   are the tiers that should actually pop. amber is kept as-is — a warning/
+   sponsored color needs to stay legible as "caution", which a monochrome
+   palette can't signal on its own. */
+[data-theme="dark"] {
+  --color-bg: 3 3 4;
+  --color-bg-raised: 18 19 20;
+  --color-ink: 235 238 236;
+  --color-ink-muted: 150 156 153;
+  --color-emerald: 68 255 110;
+  --color-violet: 192 196 199;
+  --color-teal: 143 150 153;
+  --color-amber: 251 191 36;
+  --color-tier-l0: 150 156 153;
+  --color-tier-l1: 68 255 110;
+  --color-tier-l2: 192 196 199;
+  --color-tier-l3: 150 255 180;
+}
+
 html, body {
-  background: #F6F5F1;
+  background: rgb(var(--color-bg));
 }
 
 body {
@@ -24,22 +75,13 @@ h1, h2, h3, h4, .font-heading {
   font-family: "Space Grotesk", sans-serif;
 }
 
-/* Neumorphism: every surface is carved from the same material as the page
-   (--neo-bg matches html/body's background exactly) — depth comes only from
-   a light shadow (as if lit from the top-left) and a dark shadow (as if
-   lit from the top-left, so the opposite corner falls into shadow), never
-   from a border or transparency. "Outcarved" = raised off the page.
-   "Incarved" = pressed into it — used for anything you type into or that
-   represents a pressed/active state. */
-:root {
-  --neo-bg: #F6F5F1;
-  --neo-light: rgba(255, 255, 255, 0.9);
-  --neo-dark: rgba(173, 170, 158, 0.55);
-}
-
-/* Outcarved — large surfaces (nav pill, cards, hover panels, dock). Replaces
-   the earlier frosted-glass treatment; kept the .glass class name since it's
-   used in ~15 files, but it's a solid neumorphic surface now, not a blur. */
+/* Neumorphism (light theme only — see dark overrides below): every surface
+   is carved from the same material as the page (--neo-bg matches html/
+   body's background exactly) — depth comes only from a light shadow (as if
+   lit from the top-left) and a dark shadow (the opposite corner falling
+   into shadow), never from a border or transparency. "Outcarved" = raised
+   off the page. "Incarved" = pressed into it — used for anything you type
+   into or that represents a pressed/active state. */
 .glass {
   background: var(--neo-bg);
   border: none;
@@ -77,32 +119,74 @@ h1, h2, h3, h4, .font-heading {
   box-shadow: inset 3px 3px 6px var(--neo-dark), inset -3px -3px 6px var(--neo-light);
 }
 
+/* Dark theme: a flat carved-from-the-page surface loses its whole point on
+   a near-black page (there's no soft light source to imply), so these
+   switch from neumorphism to frosted "techy" glass panels — true
+   translucency + blur (backed by TechyBackground.jsx's 3D shapes, so
+   there's actually something worth blurring/refracting behind them), a
+   thin neon-green edge, a cool silver inner highlight, and a soft green
+   glow standing in for a shadow. */
+[data-theme="dark"] .glass,
+[data-theme="dark"] .glass-refract,
+[data-theme="dark"] .glass-chip {
+  background: rgba(8, 9, 10, 0.5);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(68, 255, 110, 0.28);
+  box-shadow: 0 0 28px rgba(68, 255, 110, 0.1), inset 0 1px 0 rgba(200, 205, 202, 0.1);
+}
+
+[data-theme="dark"] .neo-in,
+[data-theme="dark"] .neo-in-sm {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(68, 255, 110, 0.35);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(68, 255, 110, 0.1);
+}
+
 /* The hero's floating score card — the one card that sits over a photo
    rather than the flat page background, so true glassmorphism (frosted,
    translucent, actually blurring the mascot/sky behind it) belongs here
    specifically, unlike the neumorphic cards everywhere else on a flat
-   surface with nothing to blur. The gradient border is a small "AI" accent
-   — emerald/violet/sky, the same accent hues used for tiers elsewhere —
-   like a thin metallic/iridescent edge catching light. Deliberately doesn't
-   set `position` here — the element already carries Tailwind's `absolute`
-   utility, and declaring `position: relative` in this stylesheet (which
-   compiles after Tailwind's utilities) would win the cascade on a tied
-   specificity and silently cancel it, pulling the card out of its intended
-   absolute placement entirely. The double-background-clip technique below
-   needs no pseudo-element or positioning context of its own, sidestepping
-   that whole class of conflict. */
+   surface with nothing to blur. Palette: "premium platinum techy glass" —
+   a cool brushed-metal gradient (white through platinum to a cooler
+   steel-gray), a crisp light-to-steel border standing in for a beveled
+   metal edge, a soft diagonal shine sweep (pure gradient layers, no
+   pseudo-element), graphite/steel text (see .ai-card-text /
+   .ai-card-text-muted), and a deliberately large radius for the "rounded"
+   look. Deliberately doesn't set `position` here — the element already
+   carries Tailwind's `absolute` utility, and declaring `position: relative`
+   in this stylesheet (which compiles after Tailwind's utilities) would win
+   the cascade on a tied specificity and silently cancel it, pulling the
+   card out of its intended absolute placement entirely. The
+   double-background-clip technique below needs no pseudo-element or
+   positioning context of its own, sidestepping that whole class of
+   conflict. */
 .ai-card {
-  border: 1.5px solid transparent;
-  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 28px;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
-    linear-gradient(135deg, rgba(52, 211, 153, 0.95), rgba(56, 189, 248, 0.8), rgba(167, 139, 250, 0.95));
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 12px 32px rgba(10, 12, 10, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.55) 32%, rgba(255, 255, 255, 0.1) 46%, transparent 62%),
+    linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(223, 227, 230, 0.8) 45%, rgba(186, 193, 199, 0.75) 100%);
+  background-origin: padding-box, border-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 16px 40px rgba(30, 34, 38, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(150, 158, 165, 0.35);
 }
+
+.ai-card-text {
+  color: #262A2E;
+}
+
+.ai-card-text-muted {
+  color: #7D838A;
+}
+
+.ai-card-divider {
+  border-top: 1px solid rgba(150, 158, 165, 0.3);
+}
+
 
 /* Soft color wash behind a hero — lightened from the old dark-glow version
    so it reads as a gentle tint on a light page instead of a dark smudge. */

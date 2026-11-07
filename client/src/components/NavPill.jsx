@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ThemeToggleSlider from "./ThemeToggleSlider.jsx";
 
 export default function NavPill({ me, onLogout }) {
   return (
@@ -41,23 +42,12 @@ export default function NavPill({ me, onLogout }) {
         </div>
       </nav>
 
-      {/* The branded pill — separate from the nav itself, same shape as the
-          "Submit your own agent" CTA so the two dark pills read as one
-          family. "वन" sounds like "One" but means "forest" — the pun this
-          site's mark has always carried, just moved here from inside the
-          nav pill. */}
-      <Link
-        to="/"
-        className="hidden shrink-0 items-center gap-3 rounded-full bg-ink p-1.5 pr-5 text-sm font-medium text-bg shadow-sm transition hover:opacity-90 sm:flex"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-bg-raised text-ink">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M2 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M8 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        Agent <span className="font-devanagari text-emerald">वन</span>
-      </Link>
+      {/* Same control as the hero's slider, just compact — one toggle, not
+          a "Submit your own agent" link here and a separate "Find listings"
+          link elsewhere. Global (NavPill renders on every route), so this
+          is what gives the dark/techy theme a way back from pages — like
+          TestAgent — that have no hero of their own. */}
+      <ThemeToggleSlider compact className="hidden max-w-[220px] sm:flex" />
     </div>
   );
 }

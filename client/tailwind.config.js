@@ -4,25 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Light theme (replaces the earlier dark/glass palette): a warm
-        // off-white page with near-black ink, matching the reference
-        // mockup's neutral-plus-photography look. "raised" is pure white
-        // for cards sitting above the off-white page body.
-        bg: { DEFAULT: "#F6F5F1", raised: "#FFFFFF" },
-        ink: { DEFAULT: "#16181B", muted: "#6B7069" },
+        // Every token resolves from a CSS variable (defined in index.css as
+        // space-separated RGB, light values on :root, dark values under
+        // [data-theme="dark"]) instead of a static hex — that's what lets
+        // the whole app's existing text-ink/bg-bg/etc classes respond to
+        // the runtime theme toggle without touching every component.
+        bg: { DEFAULT: "rgb(var(--color-bg) / <alpha-value>)", raised: "rgb(var(--color-bg-raised) / <alpha-value>)" },
+        ink: { DEFAULT: "rgb(var(--color-ink) / <alpha-value>)", muted: "rgb(var(--color-ink-muted) / <alpha-value>)" },
         glow: { green: "#064E3B", purple: "#4C1D95" },
-        emerald: { DEFAULT: "#34D399" },
-        violet: { DEFAULT: "#A78BFA" },
-        teal: { DEFAULT: "#0D9488" },
-        amber: { DEFAULT: "#FBBF24" },
-        // Darkened from their original dark-mode values (which assumed a
-        // near-black backdrop, e.g. tier-l3 was near-white to "pop" on
-        // black) so each still reads as real text on a light page.
+        emerald: { DEFAULT: "rgb(var(--color-emerald) / <alpha-value>)" },
+        violet: { DEFAULT: "rgb(var(--color-violet) / <alpha-value>)" },
+        teal: { DEFAULT: "rgb(var(--color-teal) / <alpha-value>)" },
+        amber: { DEFAULT: "rgb(var(--color-amber) / <alpha-value>)" },
         tier: {
-          l0: "#5B6B64",
-          l1: "#34D399",
-          l2: "#7C5CE0",
-          l3: "#4C1D95",
+          l0: "rgb(var(--color-tier-l0) / <alpha-value>)",
+          l1: "rgb(var(--color-tier-l1) / <alpha-value>)",
+          l2: "rgb(var(--color-tier-l2) / <alpha-value>)",
+          l3: "rgb(var(--color-tier-l3) / <alpha-value>)",
         },
       },
       fontFamily: {

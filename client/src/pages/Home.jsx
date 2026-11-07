@@ -5,18 +5,19 @@ import SearchBar from "../components/SearchBar.jsx";
 import CategoryPills from "../components/CategoryPills.jsx";
 import Filters from "../components/Filters.jsx";
 import ListingCard from "../components/ListingCard.jsx";
-import ForestView from "../scenes/Forest/ForestView.jsx";
-import SubmitAgentCTA from "../components/SubmitAgentCTA.jsx";
+import ThemeToggleSlider from "../components/ThemeToggleSlider.jsx";
+import { useTheme } from "../lib/ThemeContext.jsx";
 import robotImage from "../assets/robot.webp";
+import robotNightImage from "../assets/robot-night.webp";
 
 export default function Home() {
+  const { theme } = useTheme();
   const [categories, setCategories] = useState([]);
   const [stats, setStats] = useState(null);
   const [listings, setListings] = useState([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [filters, setFilters] = useState({ tier: "", type: "", pricing: "", interfaceType: "", openSource: "" });
-  const [view, setView] = useState("forest"); // "forest" | "grid"
   const [error, setError] = useState("");
   // Hero showcase card: the single top-scored listing, fetched once and
   // independent of the search/category/filter state below so it doesn't
@@ -59,11 +60,18 @@ export default function Home() {
             than intended). Only the top 10% is trimmed, via an aspect-ratio
             computed from the source file's real 1466x1073 dimensions
             (1466 / (1073*0.9)) rather than a guessed height, so exactly
-            10% of the sky is cut and nothing else. */}
-        <div className="overflow-hidden" style={{ aspectRatio: "1466 / 965.7" }}>
+            10% of the sky is cut and nothing else. min-height is a floor —
+            at narrow widths the aspect-ratio alone would make this box
+            (and the section, which takes its height from it) shorter than
+            the text column needs, which is what let the "Submit your own
+            agent" button overlap the stats line pinned to the bottom. The
+            floor guarantees enough room regardless of viewport width; below
+            it, object-cover just crops a bit more off the sides instead of
+            the section going too short. */}
+        <div className="relative min-h-[560px] overflow-hidden" style={{ aspectRatio: "1466 / 965.7" }}>
           <img
-            src={robotImage}
-            alt="Agent One's mascot sitting in a meadow"
+            src={theme === "dark" ? robotNightImage : robotImage}
+            alt={theme === "dark" ? "Agent One's mascot sitting in a moonlit meadow" : "Agent One's mascot sitting in a meadow"}
             className="block h-full w-full object-cover object-bottom"
           />
         </div>
@@ -94,7 +102,7 @@ export default function Home() {
               </div>
 
               <div className="mt-5">
-                <SubmitAgentCTA />
+                <ThemeToggleSlider />
               </div>
             </div>
 
@@ -103,11 +111,13 @@ export default function Home() {
                 to={`/listing/${topListing.slug}`}
                 className="ai-card absolute right-4 top-10 w-52 rounded-card p-4 xl:translate-x-[10%] xl:translate-y-[8%]"
               >
-                <p className="truncate font-heading text-sm font-semibold text-ink">{topListing.name}</p>
-                <p className="mt-0.5 truncate font-mono text-xs text-ink-muted">
+                <p className="ai-card-text truncate font-heading text-sm font-semibold">{topListing.name}</p>
+                <p className="ai-card-text-muted mt-0.5 truncate font-mono text-xs">
                   {topListing.score != null ? `Score ${Math.round(topListing.score)} · ${topListing.tier}` : topListing.tier}
                 </p>
-                <span className="mt-2 inline-block text-ink">→</span>
+                <div className="ai-card-divider mt-2.5 pt-2.5">
+                  <span className="ai-card-text inline-block">→</span>
+                </div>
               </Link>
             )}
 
