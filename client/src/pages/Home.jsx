@@ -150,16 +150,10 @@ export default function Home() {
           </section>
         )}
 
-        <div className="mt-6">
-          {view === "forest" ? (
-            <ForestView groves={groves} query={query} />
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map((l) => <ListingCard key={l.slug} listing={l} />)}
-              {listings.length === 0 && !error && (
-                <p className="col-span-full py-10 text-center text-sm text-ink-muted">No listings match your filters yet.</p>
-              )}
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {listings.map((l) => <ListingCard key={l.slug} listing={l} />)}
+          {listings.length === 0 && !error && (
+            <p className="col-span-full py-10 text-center text-sm text-ink-muted">No listings match your filters yet.</p>
           )}
         </div>
 
