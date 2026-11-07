@@ -29,7 +29,7 @@ export default function Submit({ me }) {
 
   if (!me?.user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <div className="mx-auto max-w-xl px-6 py-20 text-center">
         <h1 className="font-heading text-2xl font-semibold text-ink">Submit an agent</h1>
         <p className="mt-2 text-sm text-ink-muted">
           <Link to="/login" className="text-emerald hover:underline">Sign in</Link> first to submit a listing.
@@ -39,7 +39,7 @@ export default function Submit({ me }) {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
+    <div className="mx-auto max-w-xl px-6 py-12">
       <h1 className="font-heading text-2xl font-semibold text-ink">Submit an agent</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Facts must come from the agent's own site or repo — never copied from another directory.

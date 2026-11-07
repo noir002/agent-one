@@ -123,7 +123,7 @@ export default function Directory({ me }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
       <h1 className="font-heading text-2xl font-semibold text-ink">Community directory</h1>
       <p className="mt-1 text-sm text-ink-muted">
         A broader, lighter-weight index of real third-party AI tools — discovered via public directories but every

@@ -20,7 +20,7 @@ export default function HeadToHead() {
   const { listingA, listingB, tasks, summary } = data;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
       <Link to="/leaderboard" className="text-sm text-ink-muted hover:text-ink">← Back to the leaderboard</Link>
 
       <h1 className="mt-4 font-heading text-2xl font-semibold text-ink">

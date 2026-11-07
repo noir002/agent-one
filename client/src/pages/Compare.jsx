@@ -37,7 +37,7 @@ export default function Compare() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
       <h1 className="font-heading text-2xl font-semibold text-ink">Compare agents</h1>
       <p className="mt-1 text-sm text-ink-muted">Add 2-3 listing slugs to compare side by side.</p>
 

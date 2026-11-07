@@ -23,7 +23,7 @@ function TaskRunPage({ id }) {
   const { taskRun, task, listing, passCount, totalRuns } = data;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-4xl px-6 py-12 lg:px-8">
       <Link to={listing ? `/listing/${listing.slug}` : "/"} className="text-sm text-ink-muted hover:text-ink">← Back to {listing?.name || "the forest"}</Link>
 
       <div className="mt-4 flex items-center justify-between gap-3">
@@ -88,7 +88,7 @@ function QuickRunPage({ id }) {
   const { quickRun } = data;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-4xl px-6 py-12 lg:px-8">
       <Link to={quickRun.listingId ? `/listing/${quickRun.listingId.slug}` : "/"} className="text-sm text-ink-muted hover:text-ink">
         ← Back to {quickRun.listingId?.name || "the forest"}
       </Link>

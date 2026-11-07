@@ -104,7 +104,7 @@ export default function TestAgent({ me }) {
 
   if (!me?.user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <div className="mx-auto max-w-xl px-6 py-20 text-center">
         <h1 className="font-heading text-2xl font-semibold text-ink">Test your agent</h1>
         <p className="mt-2 text-sm text-ink-muted">
           <Link to="/login" className="text-emerald hover:underline">Sign in</Link> first to submit a repo for sandbox testing.
@@ -117,7 +117,7 @@ export default function TestAgent({ me }) {
   const isRunning = status === "pending" || status === "running";
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
+    <div className="mx-auto max-w-xl px-6 py-12">
       <h1 className="font-heading text-2xl font-semibold text-ink">Test your agent</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Push your agent to GitHub, point us at it, and we'll build and run it in an isolated

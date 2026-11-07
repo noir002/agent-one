@@ -73,7 +73,7 @@ export default function Home() {
             off-white as the page background, so the headline reads cleanly
             without needing its own backdrop. */}
         <div className="absolute inset-0">
-          <div className="relative mx-auto h-full max-w-5xl px-4">
+          <div className="relative mx-auto h-full max-w-6xl px-6 lg:px-8">
             <div className="max-w-md pt-10">
               <h1 className="font-heading text-4xl leading-[1.05] sm:text-5xl">
                 <span className="block font-light text-ink-muted">Every agent, tested.</span>
@@ -122,7 +122,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
         <CategoryPills categories={categories} active={category} onSelect={setCategory} />
 
         <div className="mt-5 flex items-center justify-between">

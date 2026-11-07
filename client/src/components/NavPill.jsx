@@ -3,7 +3,7 @@ import Wordmark from "./Wordmark.jsx";
 
 export default function NavPill({ me, onLogout }) {
   return (
-    <div className="sticky top-4 z-40 mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4">
+    <div className="sticky top-4 z-40 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 lg:px-8">
       <nav className="glass-refract flex w-full items-center justify-between rounded-full px-5 py-3">
         <Link to="/" className="shrink-0">
           <Wordmark />

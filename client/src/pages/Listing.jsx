@@ -183,7 +183,7 @@ export default function Listing({ me }) {
   const canQuickRun = !listing.isFlagship && listing.manifestId && ["http", "mcp"].includes(listing.interfaceType);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-4xl px-6 py-12 lg:px-8">
       <Link to="/" className="text-sm text-ink-muted hover:text-ink">← Back to the forest</Link>
 
       <div className="mt-4 flex items-start justify-between gap-4">
