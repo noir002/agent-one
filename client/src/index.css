@@ -77,6 +77,33 @@ h1, h2, h3, h4, .font-heading {
   box-shadow: inset 3px 3px 6px var(--neo-dark), inset -3px -3px 6px var(--neo-light);
 }
 
+/* The hero's floating score card — the one card that sits over a photo
+   rather than the flat page background, so true glassmorphism (frosted,
+   translucent, actually blurring the mascot/sky behind it) belongs here
+   specifically, unlike the neumorphic cards everywhere else on a flat
+   surface with nothing to blur. The gradient border is a small "AI" accent
+   — emerald/violet/sky, the same accent hues used for tiers elsewhere —
+   like a thin metallic/iridescent edge catching light. Deliberately doesn't
+   set `position` here — the element already carries Tailwind's `absolute`
+   utility, and declaring `position: relative` in this stylesheet (which
+   compiles after Tailwind's utilities) would win the cascade on a tied
+   specificity and silently cancel it, pulling the card out of its intended
+   absolute placement entirely. The double-background-clip technique below
+   needs no pseudo-element or positioning context of its own, sidestepping
+   that whole class of conflict. */
+.ai-card {
+  border: 1.5px solid transparent;
+  border-radius: inherit;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
+    linear-gradient(135deg, rgba(52, 211, 153, 0.95), rgba(56, 189, 248, 0.8), rgba(167, 139, 250, 0.95));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 12px 32px rgba(10, 12, 10, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
 /* Soft color wash behind a hero — lightened from the old dark-glow version
    so it reads as a gentle tint on a light page instead of a dark smudge. */
 .aurora-hero {

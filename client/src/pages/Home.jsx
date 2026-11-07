@@ -55,13 +55,18 @@ export default function Home() {
   return (
     <div>
       <section className="relative overflow-hidden">
-        {/* The full image, uncropped — natural aspect ratio, width-constrained
-            only, so nothing is ever cut off regardless of viewport height. */}
-        <img
-          src={robotImage}
-          alt="Agent One's mascot sitting in a meadow"
-          className="block w-full h-auto"
-        />
+        {/* Back to the full image (no height cap — that cropped way more
+            than intended). Only the top 10% is trimmed, via an aspect-ratio
+            computed from the source file's real 1466x1073 dimensions
+            (1466 / (1073*0.9)) rather than a guessed height, so exactly
+            10% of the sky is cut and nothing else. */}
+        <div className="overflow-hidden" style={{ aspectRatio: "1466 / 965.7" }}>
+          <img
+            src={robotImage}
+            alt="Agent One's mascot sitting in a meadow"
+            className="block h-full w-full object-cover object-bottom"
+          />
+        </div>
         {/* Bottom scrim so the light-colored stats line stays legible over
             whatever part of the photo ends up underneath it. */}
         <div
@@ -74,7 +79,7 @@ export default function Home() {
             without needing its own backdrop. */}
         <div className="absolute inset-0">
           <div className="relative mx-auto h-full max-w-6xl px-6 lg:px-8">
-            <div className="max-w-md pt-10">
+            <div className="max-w-md pt-10 xl:-translate-x-[10%] xl:translate-y-[7%]">
               <h1 className="font-heading text-4xl leading-[1.05] sm:text-5xl">
                 <span className="block font-light text-ink-muted">Every agent, tested.</span>
                 <span className="block font-semibold text-ink">Not just promised.</span>
@@ -96,7 +101,7 @@ export default function Home() {
             {topListing && (
               <Link
                 to={`/listing/${topListing.slug}`}
-                className="glass absolute right-4 top-10 w-52 rounded-card p-4 shadow-lg sm:right-8"
+                className="ai-card absolute right-4 top-10 w-52 rounded-card p-4 xl:translate-x-[10%] xl:translate-y-[8%]"
               >
                 <p className="truncate font-heading text-sm font-semibold text-ink">{topListing.name}</p>
                 <p className="mt-0.5 truncate font-mono text-xs text-ink-muted">
