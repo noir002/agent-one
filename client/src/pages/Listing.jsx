@@ -313,7 +313,10 @@ export default function Listing({ me }) {
 
       {listing.scoreParts && (
         <section className="glass mt-8 rounded-card p-6">
-          <h2 className="font-heading text-sm font-semibold text-ink">Score breakdown</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-sm font-semibold text-ink">Score breakdown</h2>
+            <Link to="/marking-criteria" className="text-xs text-emerald hover:underline">How this is scored</Link>
+          </div>
           <div className="mt-3 grid grid-cols-2 gap-3 font-mono text-xs text-ink-muted sm:grid-cols-5">
             {Object.entries(listing.scoreParts).map(([k, v]) => (
               <div key={k}>
