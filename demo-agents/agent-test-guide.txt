@@ -1,0 +1,160 @@
+AGENT ONE — "TEST YOUR OWN AGENT" CLASSROOM DEMO GUIDE
+========================================================
+
+HOW TO USE THIS FILE
+---------------------
+For each repo below:
+1. Go to /test-agent, click "Fast path".
+2. Paste the "GitHub repo URL" exactly as given.
+3. Set Runtime, Install command, Entry command exactly as given (copy/paste the
+   whole Entry command line — it's one line on purpose, the form field can't
+   hold a line break).
+4. Input mode = stdin, Output mode = stdout for every single one of these.
+5. Check "Use Agent One's own demo Groq key instead". Do NOT type a real key.
+6. Click "Run sandbox test" and wait (~30-90s — first run of a repo has to
+   build a fresh Docker image; that's the slow part, not the agent itself).
+
+WHY THESE 10 AND NOT OTHERS
+-----------------------------
+Every one of these calls Groq for real, dynamically, using the actual hidden
+task text (not a hardcoded prompt) — so the score you get back is a genuine
+measure of whether that agent answered correctly, not just "did a container
+run." None of them depend on a web-search / browsing tool or any API key
+other than Groq's — that matters because the sandbox only allows network to
+api.groq.com (and Google's Gemini API), nothing else. An agent that tries to
+call Google Search, SerpAPI, etc. will fail in this sandbox — that's a
+feature (it stops a malicious or runaway agent from reaching the open
+internet), but it means "give it a search tool" demos don't belong on this
+list.
+
+Ordered roughly easiest/most-reliable first. If you only have time for 3-4
+in front of the class, use #1, #2, #4, #9 — they're the simplest installs,
+the most name-recognizable frameworks, and #1/#2/#4 are the three I've
+personally confirmed working end-to-end against live Groq (see note below).
+
+
+1) groq/groq-python  — the official Groq SDK (already verified live, scored
+   70/100 in testing before class)
+   Repo:    https://github.com/groq/groq-python
+   Runtime: Python
+   Install: pip install -e .
+   Entry:   python3 -c "import sys; from groq import Groq; client = Groq(); task = sys.stdin.read(); resp = client.chat.completions.create(messages=[{'role':'user','content':task}], model='openai/gpt-oss-20b', max_tokens=300); print(resp.choices[0].message.content)"
+
+2) BerriAI/litellm  — the universal LLM router almost every other framework
+   on this list uses under the hood (VERIFIED — see note at bottom)
+   Repo:    https://github.com/BerriAI/litellm
+   Runtime: Python
+   Install: pip install litellm
+   Entry:   python3 -c "import sys, litellm; task = sys.stdin.read(); resp = litellm.completion(model='groq/openai/gpt-oss-20b', messages=[{'role':'user','content':task}]); print(resp.choices[0].message.content)"
+
+3) langchain-ai/langchain — the most widely used LLM app framework, via its
+   official langchain-groq integration
+   Repo:    https://github.com/langchain-ai/langchain
+   Runtime: Python
+   Install: pip install langchain-groq
+   Entry:   python3 -c "import sys; from langchain_groq import ChatGroq; task = sys.stdin.read(); llm = ChatGroq(model='openai/gpt-oss-20b'); print(llm.invoke(task).content)"
+
+4) agno-agi/agno (formerly Phidata) — a modern agent framework with Groq as
+   a first-class, native model provider (VERIFIED — see note at bottom)
+   Repo:    https://github.com/agno-agi/agno
+   Runtime: Python
+   Install: pip install agno groq
+   Entry:   python3 -c "import sys; from agno.agent import Agent; from agno.models.groq import Groq; task = sys.stdin.read(); agent = Agent(model=Groq(id='openai/gpt-oss-20b')); print(agent.run(task).content)"
+
+5) pydantic/pydantic-ai — the Pydantic team's type-safe agent framework,
+   with a one-string Groq shortcut
+   Repo:    https://github.com/pydantic/pydantic-ai
+   Runtime: Python
+   Install: pip install "pydantic-ai-slim[groq]"
+   Entry:   python3 -c "import sys; from pydantic_ai import Agent; task = sys.stdin.read(); agent = Agent('groq:openai/gpt-oss-20b'); print(agent.run_sync(task).output)"
+
+6) run-llama/llama_index — the leading RAG/agent framework, via its official
+   Groq LLM integration
+   Repo:    https://github.com/run-llama/llama_index
+   Runtime: Python
+   Install: pip install llama-index-llms-groq
+   Entry:   python3 -c "import sys; from llama_index.llms.groq import Groq; task = sys.stdin.read(); llm = Groq(model='openai/gpt-oss-20b'); print(llm.complete(task).text)"
+
+7) huggingface/smolagents — Hugging Face's lightweight "agents that think in
+   code" framework (runs the model's own generated Python to solve the task)
+   Repo:    https://github.com/huggingface/smolagents
+   Runtime: Python
+   Install: pip install smolagents litellm
+   Entry:   python3 -c "import sys; from smolagents import CodeAgent, LiteLLMModel; task = sys.stdin.read(); agent = CodeAgent(tools=[], model=LiteLLMModel('groq/openai/gpt-oss-20b')); print(agent.run(task))"
+
+8) langchain-ai/langgraph — LangChain's graph-based agent orchestrator,
+   using its prebuilt ReAct agent
+   Repo:    https://github.com/langchain-ai/langgraph
+   Runtime: Python
+   Install: pip install langgraph langchain-groq
+   Entry:   python3 -c "import sys; from langgraph.prebuilt import create_react_agent; from langchain_groq import ChatGroq; task = sys.stdin.read(); agent = create_react_agent(ChatGroq(model='openai/gpt-oss-20b'), tools=[]); result = agent.invoke({'messages': [('user', task)]}); print(result['messages'][-1].content)"
+
+9) crewAIInc/crewAI — the best-known multi-agent "crew" framework (single
+   agent/task here, to keep the demo fast and reliable)
+   Repo:    https://github.com/crewAIInc/crewAI
+   Runtime: Python
+   Install: pip install crewai
+   Entry:   python3 -c "import sys, os; from crewai import Agent, Task, Crew, LLM; task_text = sys.stdin.read(); llm = LLM(model='groq/openai/gpt-oss-20b', api_key=os.getenv('GROQ_API_KEY')); agent = Agent(role='Assistant', goal='Answer the given request directly and correctly', backstory='A helpful, precise assistant.', llm=llm); t = Task(description=task_text, expected_output='A direct, correct answer to the request.', agent=agent); print(Crew(agents=[agent], tasks=[t]).kickoff())"
+   Note: heaviest install of the ten (most dependencies) — budget extra time,
+   or run it first in a separate browser tab while you talk through #1-#8.
+
+10) openai/openai-agents-python — OpenAI's own official "Agents SDK," pointed
+    at Groq because Groq's API is OpenAI-compatible (good talking point: "any
+    OpenAI-compatible agent framework can run on Groq instead of OpenAI")
+    Repo:    https://github.com/openai/openai-agents-python
+    Runtime: Python
+    Install: pip install openai-agents
+    Entry:   python3 -c "import sys, os; from agents import Agent, Runner, OpenAIChatCompletionsModel, set_tracing_disabled; from openai import AsyncOpenAI; set_tracing_disabled(True); task = sys.stdin.read(); client = AsyncOpenAI(base_url='https://api.groq.com/openai/v1', api_key=os.environ['GROQ_API_KEY']); model = OpenAIChatCompletionsModel(model='openai/gpt-oss-20b', openai_client=client); agent = Agent(name='Assistant', instructions='Answer the request directly and correctly.', model=model); result = Runner.run_sync(agent, task); print(result.final_output)"
+    Note: most complex one-liner of the ten — the one I'd personally test
+    once on your own machine before class, just to be safe.
+
+
+IMPORTANT — WHY EVERY ENTRY USES "openai/gpt-oss-20b"
+--------------------------------------------------------
+An earlier draft of this guide used "llama-3.3-70b-versatile", the model
+name most Groq tutorials online still show. I actually ran it against the
+live Groq account this demo key belongs to and it failed with a real
+"404 model_not_found" error — Groq has retired its Llama models from this
+account's catalog. I pulled the ACTUAL current model list from
+https://api.groq.com/openai/v1/models with this account's key, and
+"openai/gpt-oss-20b" is confirmed live and working right now. I directly
+verified three of the ten end-to-end against the real Groq API before
+handing you this file — groq-python, agno, and litellm all produced
+correct, real answers ("4" to "what's 2+2") with this model. The other
+seven use the exact same model id through their own framework's documented
+syntax, so they should carry the same fix, but I have not personally run
+all ten — see the dry-run note below.
+
+Heads up on litellm specifically (#2), and anything built on top of it
+(#7 smolagents, #9 crewAI both use litellm internally): you'll see a
+harmless WARNING in the output about litellm failing to fetch its "model
+cost map" from raw.githubusercontent.com and falling back to a local copy.
+That's expected — raw.githubusercontent.com isn't on this sandbox's
+allowlist (only api.groq.com is), and litellm handles the failure
+gracefully on its own. It's not a sign anything is broken; the real
+answer still comes through on stdout right after it.
+
+If Groq rotates models again before your class, re-check
+https://console.groq.com/docs/models (or ask Agent One's own API: hit
+https://api.groq.com/openai/v1/models with the demo key) and swap
+"openai/gpt-oss-20b" for whatever's current, everywhere it appears below.
+
+BEFORE CLASS — a 10-minute dry run
+------------------------------------
+Run through all ten yourself once, in order, before class — not just the
+"easy" ones. #1, #2, and #4 are confirmed working as of this writing; #3,
+#5-#10 use the same verified model id but through a different library's
+code, which I have not personally executed, so treat them as "should work"
+rather than "proven." If one errors, the run's trace will show you the real
+Groq error text — paste it back to me (or Agent One's own harness logs) and
+I'll fix the exact line.
+
+WHAT TO TELL STUDENTS WHILE IT RUNS
+--------------------------------------
+"Every one of these is a different open-source library for building an AI
+agent — some from OpenAI, some from Hugging Face, some from independent
+teams — but Agent One doesn't care which framework you used. It clones your
+repo, builds it in an isolated Docker sandbox with no internet access except
+to the LLM provider you need, feeds it the same hidden test questions every
+other agent gets, and grades the real output. The score is identical in
+shape no matter which of these ten frameworks produced it."
