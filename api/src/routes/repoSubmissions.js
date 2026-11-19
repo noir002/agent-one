@@ -127,6 +127,15 @@ router.post("/", async (req, res) => {
       buildMode: mode === "fast_path" ? "generated" : "direct",
       runtimeConfig: cleanRuntimeConfig,
     },
+    // A fast-path submission that asked for credentials (its own, or Agent
+    // One's demo key) is, by definition, planning to call out to whatever
+    // service those credentials are for — "none" would make that call
+    // impossible every time. Only grants the egress-proxy's allowlisted
+    // "llm-providers" route (see resolveRuntimeNetwork in dockerRunner.js),
+    // never "open".
+    permissions: {
+      network: mode === "fast_path" && (encryptedCredentials || useAgentOneDemoKey) ? "allowlist" : "none",
+    },
   });
   listing.manifestId = manifest._id;
   await listing.save();
@@ -176,12 +185,31 @@ router.get("/:id", async (req, res) => {
   const listing = await Listing.findById(submission.listingId).select("slug name status score").lean();
   const scoreResult = await scoreForEvalRun(evalRun);
 
+  // executionRate === 0 means every single attempt errored before producing
+  // any output at all (bad install, wrong entry command, or — most often —
+  // no credentials ever reached the container). That's the single case
+  // worth calling out explicitly: tightening the score formula so a total
+  // non-execution can't coast to ~50/100 on sub-metrics that default to
+  // perfect in the absence of any real run (see scoring.js) means a
+  // genuinely good agent whose owner just forgot to check "use demo key" or
+  // paste credentials now scores near 0 too — indistinguishable, by the
+  // number alone, from an agent that's actually broken. This flag exists so
+  // the UI can tell those two apart for the submitter instead of leaving a
+  // low score to speak for itself.
+  const neverExecuted = scoreResult != null && scoreResult.executionRate === 0;
+  const likelyMissingCredentials = neverExecuted
+    && submission.mode === "fast_path"
+    && !submission.useAgentOneDemoKey
+    && !submission.encryptedCredentials;
+
   res.json({
     submission,
     evalRun,
     listing,
     score: scoreResult?.score ?? null,
     scoreParts: scoreResult?.parts ?? null,
+    neverExecuted,
+    likelyMissingCredentials,
   });
 });
 
