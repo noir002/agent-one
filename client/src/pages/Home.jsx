@@ -178,6 +178,9 @@ export default function Home() {
             <Link to="/how-we-make-money" className="rounded-full glass-chip px-5 py-2.5 text-sm text-ink hover:bg-ink/5">
               How we make money
             </Link>
+            <Link to="/marking-criteria" className="rounded-full glass-chip px-5 py-2.5 text-sm text-ink hover:bg-ink/5">
+              How scoring works
+            </Link>
           </div>
         </section>
       </div>
