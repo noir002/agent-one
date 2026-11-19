@@ -25,6 +25,7 @@ export function computeEvalRunScore(taskRuns, tasks, completedAt) {
   let safetyTotal = 0;
   let safetyPassed = 0;
   let efficiencySum = 0;
+  let executedRuns = 0;
 
   for (const runs of byTask) {
     const task = taskById.get(runs[0].taskId.toString());
@@ -42,9 +43,15 @@ export function computeEvalRunScore(taskRuns, tasks, completedAt) {
       r.costUsd <= (task?.budget?.maxCostUsd ?? Infinity)
     );
     efficiencySum += withinBudget ? 1 : 0.5;
+
+    // "error" means the runner itself never got a real attempt back (bad
+    // install, missing credentials, wrong entry command, container crash)
+    // — as opposed to "fail", which means it ran and was graded wrong.
+    executedRuns += runs.filter((r) => r.outcome !== "error").length;
   }
 
   const totalTasks = byTask.length || 1;
+  const totalRuns = taskRuns.length || 1;
   const success = passedTasks / totalTasks;
   const consistency = agreeingTasks / totalTasks;
   const safety = safetyTotal > 0 ? safetyPassed / safetyTotal : 1; // no safety tasks yet (Phase 3) => no evidence against it
@@ -53,8 +60,34 @@ export function computeEvalRunScore(taskRuns, tasks, completedAt) {
   const daysSince = completedAt ? Math.floor((Date.now() - new Date(completedAt).getTime()) / 86_400_000) : 0;
   const freshness = Math.max(0, 1 - daysSince / FRESHNESS_STALE_DAYS);
 
-  const parts = { success, consistency, safety, efficiency, freshness };
-  const score = Object.entries(SCORE_WEIGHTS).reduce((sum, [key, weight]) => sum + parts[key] * weight, 0) * 100;
+  // What fraction of the 3x-per-task attempts actually ran far enough to
+  // be graded pass/fail, instead of erroring out before producing any
+  // output at all. consistency/safety/efficiency/freshness all measure the
+  // QUALITY of observed behavior — none of them mean anything when there
+  // was no behavior to observe, so an agent that never executed a single
+  // attempt (executionRate 0) can't earn credit on those either; without
+  // this, a total setup failure (bad install, missing credentials, wrong
+  // entry command) that fails every attempt identically, safely, and for
+  // free was scoring ~50/100 purely from sub-metrics that default to a
+  // perfect score in the absence of any real execution. A partially-
+  // executing agent is scaled proportionally, not cliff-edged to 0, so one
+  // flaky task among many doesn't wipe a score that's otherwise earned.
+  const executionRate = executedRuns / totalRuns;
 
-  return { score: Math.round(score * 10) / 10, parts };
+  // Kept out of `parts` on purpose — every caller that displays scoreParts
+  // (Listing.jsx, TestAgent.jsx) renders it as a generic Object.entries()
+  // tile list, and executionRate is an internal input to the score, not a
+  // graded dimension of the agent's behavior that belongs alongside them.
+  const parts = { success, consistency, safety, efficiency, freshness };
+  const score = (
+    success * SCORE_WEIGHTS.success +
+    executionRate * (
+      consistency * SCORE_WEIGHTS.consistency +
+      safety * SCORE_WEIGHTS.safety +
+      efficiency * SCORE_WEIGHTS.efficiency +
+      freshness * SCORE_WEIGHTS.freshness
+    )
+  ) * 100;
+
+  return { score: Math.round(score * 10) / 10, parts, executionRate };
 }
