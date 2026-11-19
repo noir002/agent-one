@@ -16,6 +16,8 @@ import HeadToHead from "./pages/HeadToHead.jsx";
 import Reports from "./pages/Reports.jsx";
 import Directory from "./pages/Directory.jsx";
 import HowWeMakeMoney from "./pages/HowWeMakeMoney.jsx";
+import MarkingCriteria from "./pages/MarkingCriteria.jsx";
+import About from "./pages/About.jsx";
 import { api } from "./lib/api.js";
 import { ThemeProvider } from "./lib/ThemeContext.jsx";
 import ThemeTransitionOverlay from "./components/ThemeTransitionOverlay.jsx";
@@ -71,6 +73,8 @@ export default function App() {
             <Route path="/owner" element={<OwnerDashboard me={me} setMe={setMe} />} />
             <Route path="/admin" element={<Admin me={me} />} />
             <Route path="/how-we-make-money" element={<HowWeMakeMoney />} />
+            <Route path="/marking-criteria" element={<MarkingCriteria />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </main>
       </div>
