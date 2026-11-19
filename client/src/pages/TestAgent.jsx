@@ -220,14 +220,33 @@ export default function TestAgent({ me }) {
 
       {result && (
         <div className="glass mt-6 rounded-card p-6">
-          <h2 className="font-heading text-sm font-semibold text-ink">
-            {status === "done" && "Sandbox test complete"}
-            {status === "failed" && "Sandbox test failed"}
-            {isRunning && "Running in sandbox…"}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-sm font-semibold text-ink">
+              {status === "done" && "Sandbox test complete"}
+              {status === "failed" && "Sandbox test failed"}
+              {isRunning && "Running in sandbox…"}
+            </h2>
+            {status === "done" && (
+              <Link to="/marking-criteria" className="text-xs text-emerald hover:underline">How this is scored</Link>
+            )}
+          </div>
 
           {status === "done" && result.score !== null && (
             <>
+              {result.likelyMissingCredentials ? (
+                <p className="mt-2 rounded-lg bg-amber/10 p-3 text-xs text-amber">
+                  Every hidden task failed immediately, before your agent ever ran — and no credentials
+                  were attached to this submission (no pasted key, "Use Agent One's own demo key" wasn't
+                  checked). This score most likely reflects a missing API key, not your agent's real
+                  capability. Add your credentials (or check the demo-key box) and run again before
+                  trusting this number.
+                </p>
+              ) : result.neverExecuted ? (
+                <p className="mt-2 rounded-lg bg-amber/10 p-3 text-xs text-amber">
+                  Every hidden task failed immediately, before your agent ever produced output — check
+                  your install/entry command (not necessarily your agent's logic) and run again.
+                </p>
+              ) : null}
               <div className="mt-2 text-4xl font-semibold text-emerald">{result.score}<span className="text-lg text-ink-muted">/100</span></div>
               <ScorePartsBar scoreParts={result.scoreParts} />
               <button onClick={handlePromote} disabled={promoting}
