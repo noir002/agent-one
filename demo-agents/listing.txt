@@ -1,0 +1,18 @@
+AGENT ONE — CLASSROOM DEMO: 10 REAL AI AGENT REPOS TO TEST
+(all wired to Groq, all should return a real score, not an error)
+
+ 1. groq/groq-python                    https://github.com/groq/groq-python
+ 2. BerriAI/litellm                     https://github.com/BerriAI/litellm
+ 3. langchain-ai/langchain               https://github.com/langchain-ai/langchain
+ 4. agno-agi/agno                       https://github.com/agno-agi/agno
+ 5. pydantic/pydantic-ai                https://github.com/pydantic/pydantic-ai
+ 6. run-llama/llama_index               https://github.com/run-llama/llama_index
+ 7. huggingface/smolagents              https://github.com/huggingface/smolagents
+ 8. langchain-ai/langgraph              https://github.com/langchain-ai/langgraph
+ 9. crewAIInc/crewAI                    https://github.com/crewAIInc/crewAI
+10. openai/openai-agents-python         https://github.com/openai/openai-agents-python
+
+Full install/entry commands for each: see agent-test-guide.txt in this same folder.
+Paste the repo URL into "GitHub repo URL", pick "Fast path", then copy the matching
+Runtime / Install command / Entry command from the guide exactly as written.
+Always check "Use Agent One's own demo Groq key instead" — do not type any real key.
